@@ -1,4 +1,3 @@
-name: /Users/icuh/opt/anaconda3/envs/gpd04
 channels:
   - defaults
   - conda-forge
