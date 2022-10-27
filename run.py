@@ -13,15 +13,7 @@ from preprocessing import make_life, main_life, save_and_processing, show_button
     make_traffic, classify_traffic, run_traffic, make_arch, make_livestock, make_buld_emd, run_livestock,\
     run_facil, make_people, make_tot_sido, run_people
 
-from life import run_life
 
-app = Flask(__name__)
-
-
-@app.route('/home')
-def home():
-    print('Hello world!')
-    return
 
 def grid_ndra(grid_file, ndra_file, km_param=1000000):
     placeholder = st.empty()
@@ -41,7 +33,10 @@ def grid_ndra(grid_file, ndra_file, km_param=1000000):
     placeholder.success('데이터 읽기 완료')
 
     return grid, grid_ndra
+
 if __name__ == "__main__":
+
+    app.run(debug=True)
 
     st.markdown("""<div style="background-color:#464e5f;padding:1px;border-radius:5px">
 <h3 style="color:white;text-align:center;">호우영향예보</h3></div>""", unsafe_allow_html=True)
@@ -132,8 +127,8 @@ if __name__ == "__main__":
 
 
         if 'data_01' in st.session_state and 'data_02' in st.session_state and 'data_03' in st.session_state:
-            root_path = '../자동화/data/2022/'
-            grid_path = root_path + '01.공통/전국격자/grid_test.shp'
+            root_path = './dataset/'
+            grid_path = root_path + 'grid_test.shp'
 
             if 'levels' not in st.session_state:
                 st.session_state.grid = gpd.read_file(grid_path).to_crs(epsg=5179)
@@ -242,10 +237,10 @@ if __name__ == "__main__":
 
 
         if 'dataset' in st.session_state and 'data_01' in st.session_state and 'data_02' in st.session_state and 'data_03' in st.session_state:
-            root_path = '../자동화/data/2022/'
-            grid_path = root_path + '01.공통/전국격자/grid_test.shp'
-            seoul_path = root_path + '01.공통/서울시/서울시_격자.shp'
-            base_path =  root_path + '01.공통/서울시/서울시_base.shp'
+            root_path = './daset/'
+            grid_path = root_path + 'grid_test.shp'
+            seoul_path = root_path + '서울시_격자.shp'
+            base_path =  root_path + '서울시_base.shp'
 
             if 'levels' not in st.session_state:
                 placeholder = st.empty()
@@ -317,8 +312,8 @@ if __name__ == "__main__":
 
 
         if 'road_overlay' in st.session_state:
-            root_path = '../자동화/data/2022/'
-            grid_path = root_path + '01.공통/전국격자/grid_test.shp'
+            root_path = './dataset/'
+            grid_path = root_path + 'grid_test.shp'
 
             if 'levels' not in st.session_state:
                 st.session_state.grid = gpd.read_file(grid_path).to_crs(epsg=5179)
@@ -363,9 +358,9 @@ if __name__ == "__main__":
             placeholder.success('농업 x 전국격자지도 데이터 읽기 완료')
 
         if 'arch' in st.session_state:
-            root_path = '../자동화/data/2022/'
-            grid_path = root_path + '01.공통/전국격자/grid_test.shp'
-            ndra_path = root_path + '01.공통/자연재해위험지구/자연재해위험지구.shp'
+            root_path = './dataset/'
+            grid_path = root_path + 'grid_test.shp'
+            ndra_path = root_path + '자연재해위험지구.shp'
 
             if 'levels' not in st.session_state:
                 st.session_state.grid, st.session_state.grid_ndra = grid_ndra(grid_path, ndra_path)
@@ -464,8 +459,8 @@ if __name__ == "__main__":
             placeholder.success('EMD 데이터 읽기 완료')
 
         if 'livestock' in st.session_state and 'buld' in st.session_state and 'emd' in st.session_state:
-            root_path = '../자동화/data/2022/'
-            grid_path = root_path + '01.공통/전국격자/grid_test.shp'
+            root_path = './dataset/'
+            grid_path = root_path + 'grid_test.shp'
 
             if 'levels' not in st.session_state:
                 placeholder = st.empty()
@@ -494,8 +489,8 @@ if __name__ == "__main__":
         st.session_state.c_list = ['공업','공용','교육연구','의료복지','편의']
         st.session_state.c_list.sort()
         if 'grid' not in st.session_state:
-            root_path = '../자동화/data/2022/'
-            grid_path = root_path + '01.공통/전국격자/grid_test.shp'
+            root_path = './dataset/'
+            grid_path = root_path + 'grid_test.shp'
             placeholder = st.empty()
             placeholder.success('전국격자지도 읽는 중 ...')
             st.session_state.grid = gpd.read_file(grid_path).to_crs(epsg=5179)
