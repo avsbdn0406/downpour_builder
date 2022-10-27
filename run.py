@@ -1,5 +1,3 @@
-from flask import Flask
-import streamlit as st
 import os
 from PIL import Image
 
@@ -35,8 +33,6 @@ def grid_ndra(grid_file, ndra_file, km_param=1000000):
     return grid, grid_ndra
 
 if __name__ == "__main__":
-
-    app.run(debug=True)
 
     st.markdown("""<div style="background-color:#464e5f;padding:1px;border-radius:5px">
 <h3 style="color:white;text-align:center;">호우영향예보</h3></div>""", unsafe_allow_html=True)
