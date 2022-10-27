@@ -150,7 +150,7 @@
   - soupsieve=2.3.1=pyhd3eb1b0_0
   - sqlite=3.39.3=h707629a_0
   - stack_data=0.2.0=pyhd3eb1b0_0
-  - streamlit=1.11.0=py38hecd8cb5_0
+  - streamlit=1.9.2=py38hecd8cb5_0
   - terminado=0.13.1=py38hecd8cb5_0
   - testpath=0.6.0=py38hecd8cb5_0
   - tk=8.6.12=h5d9f67b_0
