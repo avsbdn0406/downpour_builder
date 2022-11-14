@@ -5,9 +5,11 @@ import geopandas as gpd
 from PIL import Image
 from postprocessing import  natural_breaks, levels_to_csv, draw_grid
 
+
 def convert_df(df):
-    # IMPORTANT: Cache the conversion to prevent computation on every rerun
+
     return df.to_csv().encode('utf-8')
+
 
 def make_life(txt_list):
     df = pd.DataFrame(columns=['gid', 'lbl', 'val'])
@@ -17,50 +19,52 @@ def make_life(txt_list):
     w_flag = True
     while w_flag:
         for i in range(1, len(txt_list) * 3, 3):
-            try:
-                if '*' in txt_list[i + flag] or '*' in txt_list[i + flag + 1] or '*' in txt_list[i + flag + 2]:
-                    df.loc[cnt] = [txt_list[i + flag], 0, 0]
-                    flag -= 1
-                    cnt += 1
-                else:
-                    if txt_list[i + 1] == 'N/A' and txt_list[i + 2] == 'N/A':
-                        df.loc[cnt] = [txt_list[i], 0, 0]
-                    elif txt_list[i + 1] == 'N/A':
-                        df.loc[cnt] = [txt_list[i], 0, float(txt_list[i + 2])]
-                    elif txt_list[i + 2] == 'N/A':
-                        df.loc[cnt] = [txt_list[i], float(txt_list[i + 1]), 0]
+            if cnt <= 107555*3:
+                try:
+                    if '*' in txt_list[i + flag] or '*' in txt_list[i + flag + 1] or '*' in txt_list[i + flag + 2]:
+                        df.loc[cnt] = [txt_list[i + flag], 0, 0]
+                        flag -= 1
+                        cnt += 1
                     else:
-                        try:
-                            df.loc[cnt] = [txt_list[i], float(txt_list[i + 1]), float(txt_list[i + 2])]
+                        if txt_list[i + 1] == 'N/A' and txt_list[i + 2] == 'N/A':
+                            df.loc[cnt] = [txt_list[i], 0, 0]
+                        elif txt_list[i + 1] == 'N/A':
+                            df.loc[cnt] = [txt_list[i], 0, float(txt_list[i + 2])]
+                        elif txt_list[i + 2] == 'N/A':
+                            df.loc[cnt] = [txt_list[i], float(txt_list[i + 1]), 0]
+                        else:
+                            try:
+                                df.loc[cnt] = [txt_list[i], float(txt_list[i + 1]), float(txt_list[i + 2])]
 
-                        except ValueError as e:
-                            df.loc[cnt] = [txt_list[i], txt_list[i + 1], txt_list[i + 2]]
+                            except ValueError as e:
+                                df.loc[cnt] = [txt_list[i], txt_list[i + 1], txt_list[i + 2]]
 
-                    cnt += 1
-            except IndexError as error:
-                break
+                        cnt += 1
+                except IndexError as error:
+                    break
+            else:
+                w_flag = False
         w_flag = False
-
 
     df['lbl'] = df['lbl'].astype(float)
     df['val'] = df['val'].astype(float)
 
     return df
 
+
 def run_life(df, category) :
     placeholder = st.empty()
     placeholder.success(category+' 데이터를 처리합니다.')
-
-    # df = pd.concat(dataset, axis=0, ignore_index=True)
 
     df = df[['gid', 'val']].groupby('gid')['val'].sum().reset_index()
     df.columns = ['gid', category]
     return df
 
-def main_life(data_01, data_02, data_03):
-    df_total = run_life(data_01, '총인구')
-    df_child = run_life(data_02, '유아')
-    df_elder = run_life(data_03, '고령')
+
+def main_life(data_tot, data_child, data_elder):
+    df_total = run_life(data_tot, '총인구')
+    df_child = run_life(data_child, '유아')
+    df_elder = run_life(data_elder, '고령')
 
     df = pd.concat([df_total[['gid', '총인구']],
                                      df_child[['유아']],
@@ -74,6 +78,7 @@ def main_life(data_01, data_02, data_03):
     df = df[['gid', '총인구', '취약인구', '전국_인구']]
 
     return df
+
 
 def save_and_processing(save_path, grid, df, columns, filename):
 
@@ -93,16 +98,18 @@ def save_and_processing(save_path, grid, df, columns, filename):
     placeholder.warning(filename + ' 결과 이미지를 저장중 입니다.')
 
     draw_grid(grid, df, save_path, columns, filename, mode=1)
-    placeholder.warning(filename + ' 결과 이미지 저장중 완료.')
+    placeholder.warning(filename + ' 결과 이미지 저장 완료.')
 
     return library, levels
 
-def show_button(save_path, levels, img, library, category, file_name):
+
+def show_button(save_path, levels, img, library, file_name):
     st.header(file_name)
+
     st.subheader('Impact Levels')
     if type(levels['from'][0]) == 'float':
         st.write(levels.style.format("{:.6}"))
-    elif type(levels['from'][0]) == 'int':
+    else:
         st.write(levels)
 
     st.image(img)
@@ -131,8 +138,9 @@ def show_button(save_path, levels, img, library, category, file_name):
             data=img_save,
             file_name="grid_" + file_name + ".png",
             mime="image/png",
-            key = file_name + '_2'
+            key=file_name + '_2'
         )
+
 
 def make_people(file):
     df = pd.read_csv(file, encoding='cp949')
@@ -140,13 +148,14 @@ def make_people(file):
     df.fillna(0)
     df.iloc[:, 5:] = df.iloc[:, 5:].astype(float).astype(int)
     df['취약인구수'] = df['남자0세부터9세생활인구수'] + df['남자65세부터69세생활인구수'] + df['남자70세이상생활인구수'] + df['여자0세부터9세생활인구수'] + df['여자65세부터69세생활인구수'] + df['여자70세이상생활인구수']
-    try :
+    try:
         df = df[['기준일ID', '시간대구분', '행정동코드', '집계구코드', '총생활인구수', '취약인구수']]
         return df
-    except :
+    except:
         df['기준일ID'] = df['?"기준일ID"']
         df = df[['기준일ID', '시간대구분', '행정동코드', '집계구코드', '총생활인구수', '취약인구수']]
         return df
+
 
 def make_tot_sido(df_tot, df_child, df_elder):
     tot_child = pd.merge(df_tot, df_child, on='gid')
@@ -154,12 +163,13 @@ def make_tot_sido(df_tot, df_child, df_elder):
 
     sido_df['취약인구'] = sido_df['유아'] + sido_df['고령']
     sido_df['취약인구비'] = sido_df['취약인구'] / sido_df['총인구']
-    sido_df['전국_인구'] = sido_df['총인구'] * (sido_df['취약인구비'] + 1)
+    sido_df['생활인구'] = sido_df['총인구'] * (sido_df['취약인구비'] + 1)
 
-    sido_df = sido_df[sido_df['전국_인구'].notnull()]
-    sido_df = sido_df[['gid', '총인구', '취약인구', '전국_인구']]
+    sido_df = sido_df[sido_df['생활인구'].notnull()]
+    sido_df = sido_df[['gid', '총인구', '취약인구', '생활인구']]
 
-    return tot_child, sido_df
+    return sido_df
+
 
 def make_df_people(df):
     df = df.sort_values(by=['기준일ID', '시간대구분'])
@@ -179,7 +189,8 @@ def make_df_people(df):
 
     return df_weekdays, df_weekend
 
-def day_df(times, df, base_grid, seoul_grid):
+
+def day_df(times, df, base_grid):
     df_edit = df[df['시제'] == times].copy()
     df_edit['집계구코드'] = df_edit['집계구코드'].astype(int)
     df_edit = df_edit.groupby('집계구코드')[['총생활인구수', '취약인구수']].mean().reset_index()
@@ -193,25 +204,28 @@ def day_df(times, df, base_grid, seoul_grid):
     df_edit = df_edit.groupby(['gid'])[['총생활인구수', '취약인구수']].sum().reset_index()
     df_edit['취약인구비'] = df_edit['취약인구수'] / df_edit['총생활인구수']
 
-    # Seoul
-    seoul = pd.merge(seoul_grid, df_edit, on='gid')
-    seoul['total'] = seoul['총생활인구수'] * (seoul['취약인구비'] + 1)
-    seoul = seoul[['gid', '총생활인구수', '취약인구수', 'total']]
-    seoul.columns = ['gid', '총인구', '취약인구', '생활인구']
+    return df_edit
 
-    return df_edit, seoul
 
-def run_people(df, base_grid, seoul_grid, tot_child, sido_df):
+def run_people(df, base_grid, seoul_grid, sido_df):
     time_nm = {1: '아침', 2: '낮', 3: '저녁', 4: '야간'}
     df_weekdays, df_weekend = make_df_people(df)
     df_list = {'평일': df_weekdays, '주말': df_weekend}
+
     results = []
     ph = st.empty()
+
     for d, day in enumerate(df_list):
         df = df_list[day]
         for times in range(1,len(time_nm)+1):
             ph.success(day + ' '+ time_nm[times])
-            df_edit, seoul = day_df(times, df, base_grid, seoul_grid)
+            df_edit = day_df(times, df, base_grid, seoul_grid)
+
+            # Seoul
+            seoul = pd.merge(seoul_grid, df_edit, on='gid')
+            seoul['total'] = seoul['총생활인구수'] * (seoul['취약인구비'] + 1)
+            seoul = seoul[['gid', '총생활인구수', '취약인구수', 'total']]
+            seoul.columns = ['gid', '총인구', '취약인구', '생활인구']
 
             res = pd.concat([sido_df, seoul], axis=0)
             res = res.groupby(['gid'])[['총인구', '취약인구', '생활인구']].sum().reset_index()
@@ -221,22 +235,21 @@ def run_people(df, base_grid, seoul_grid, tot_child, sido_df):
     return results, time_nm, df_list
 
 
-
-
 def make_traffic(road_overlay):
-    road_overlay['length_union'] = road_overlay.length / 1000
-
     df = road_overlay[['gid', 'FACIL_KIND', 'length_union', 'LANES']].copy()
-    df['FACIL_KIND'] = df['FACIL_KIND'].astype(str)
+    df['FACIL_KIND'] = df['FACIL_KIND'].astype(int)
     df['length_union'] = df['length_union'].astype(float)
     df['LANES'] = df['LANES'].astype(int)
 
     return df
 
+
 def classify_traffic(df):
     placeholder = st.empty()
     placeholder.success('도로 종류 분류중... ')
     progress_facil = st.progress(0)
+
+    df['FACIL_KIND'] = df['FACIL_KIND'].astype(str)
 
     for i, x in enumerate(df['FACIL_KIND']):
         progress_facil.progress(int(100 / len(df) * (i + 1)))
@@ -250,28 +263,47 @@ def classify_traffic(df):
             df['FACIL_KIND'][i] = '고가도로'
         elif x == '8':
             df['FACIL_KIND'][i] = '지하도로'
-
     return df
+
 
 def run_traffic(df):
     placeholder = st.empty()
     placeholder.success('도로 수 x 도로 길이 계산중...')
     df['LANExLENGTH'] = df['length_union'] * df['LANES']
     df = df[['gid', 'FACIL_KIND', 'LANExLENGTH']].dropna()
-    df = pd.pivot_table(df,
-                                         index='gid',
-                                         columns='FACIL_KIND',
-                                         values='LANExLENGTH',
-                                         aggfunc='sum').reset_index()
+    df = pd.pivot_table(df,index='gid', columns='FACIL_KIND', values='LANExLENGTH', aggfunc='sum').reset_index()
 
     placeholder.success('취약 도로 분류중...')
-    df['지하차도/교량/터널'] = df['고가도로'] + df['교량'] + df['터널']
+
+    col_list = df.keys().to_list()
+
+    if '고가도로' in col_list and '교량' in col_list and '터널' in col_list:
+        df['지하차도/교량/터널'] = df['고가도로'] + df['교량'] + df['터널']
+
+    elif '고가도로' in col_list and '교량' in col_list:
+        df['지하차도/교량/터널'] = df['고가도로'] + df['교량']
+
+    elif '교량' in col_list and '터널' in col_list:
+        df['지하차도/교량/터널'] = df['교량'] + df['터널']
+
+    elif '고가도로' in col_list and '터널' in col_list:
+        df['지하차도/교량/터널'] = df['고가도로'] + df['터널']
+
+    elif '고가도로' in col_list:
+        df['지하차도/교량/터널'] = df['고가도로']
+
+    elif '교량' in col_list:
+        df['지하차도/교량/터널'] = df['교량']
+
+    elif '터널' in col_list:
+        df['지하차도/교량/터널'] = df['터널']
+
+
     df = df[['gid', '일반도로', '지하차도/교량/터널']]
 
     placeholder.success('취약 도로 계산중...')
     df['prop'] = df['지하차도/교량/터널'] / df['일반도로']
-    df['도로'] = df.apply(
-        lambda x: x['일반도로'] * (x['prop'] + 1) if x['prop'] > 0 else x['일반도로'], axis=1)
+    df['도로'] = df.apply(lambda x: x['일반도로'] * (x['prop'] + 1) if x['prop'] > 0 else x['일반도로'], axis=1)
 
     df = df[df['일반도로'] > 0]
     df = df.sort_values(by='일반도로').reset_index()
@@ -279,6 +311,7 @@ def run_traffic(df):
     df = df[['gid', '일반도로/고속도로', '지하차도/교량/터널', '도로']]
 
     return df
+
 
 def make_arch(allData_overlay, grid_ndra):
     placeholder = st.empty()
@@ -302,6 +335,7 @@ def make_arch(allData_overlay, grid_ndra):
 
     return concat_data
 
+
 def make_livestock(df):
     df.columns = ['시도', '시군', '읍면동', '축종명', '개수', '시설 없음', '시설 있음', '자영', '임차', '사육규모', '단위']
     livestock = df[['시도', '시군', '읍면동', '축종명', '사육규모']]
@@ -315,6 +349,7 @@ def make_livestock(df):
 
     return livestock
 
+
 def make_buld_emd(bulds, emds, grid, list_name):
     allData = []
     emdData = []
@@ -325,12 +360,10 @@ def make_buld_emd(bulds, emds, grid, list_name):
         ph.success(i + ' 자료 읽는 중...')
         bar_livestock.progress(int(100 / len(bulds) * (list_name.index(i) + 1)))
 
-        # ls_live = ls[ls['BDTYP_CD'] == '17101']
         ls_live['EMD_CD'] = ls_live['EMD_CD'].astype('str')
         ls_live['SIG_CD'] = ls_live['SIG_CD'].astype('str')
         ls_live['EMD_CD'] = ls_live['SIG_CD'] + ls_live['EMD_CD']
         ls_live = ls_live[['SIG_CD', 'EMD_CD', 'geometry']]
-
 
         df_emd['시도'] = str(i)
         df_emd['EMD_CD'] = df_emd['EMD_CD'].astype('str')
@@ -345,7 +378,6 @@ def make_buld_emd(bulds, emds, grid, list_name):
         farm_sido = pd.pivot_table(farm_sido, index=['gid', 'EMD_CD'],
                                    columns='TYPE', values='area', aggfunc='sum').reset_index()
 
-
         allData.append(farm_sido)
         emdData.append(df_emd)
 
@@ -353,36 +385,19 @@ def make_buld_emd(bulds, emds, grid, list_name):
     placeholder = st.empty()
     placeholder.warning('축사 면적 데이터 병합중...')
     farm = pd.concat(allData, axis=0, ignore_index=True)
-    st.write('farm length')
-    st.write(len(farm))
-    st.write(farm[:30])
+
     placeholder.warning('시도 데이터 병합중...')
     emd = pd.concat(emdData, axis=0, ignore_index=True)
-    st.write('emd length')
-    st.write(len(emd))
-    st.write(emd[:30])
 
     return farm, emd
 
-def run_livestock(livestock, emd, farm):
-    st.write('livestock length')
-    st.write(len(livestock))
-    st.write(livestock[:100])
 
+def run_livestock(livestock, emd, farm):
     livestock['NM'] = livestock['시도'] + livestock['읍면동']
-    st.write('livestock length NM')
-    st.write(len(livestock))
-    st.write(livestock[:100])
 
     emd['NM'] = emd['시도'] + emd['EMD_KOR_NM']
-    st.write('emd NM length')
-    st.write(len(emd))
-    st.write(emd[:100])
 
     livestocks = livestock.merge(emd, on='NM')
-    st.write('livestocks length')
-    st.write(len(livestocks))
-    st.write(livestocks[:100])
 
     livestocks = livestocks[['시도_x', '시군', '읍면동', 'EMD_CD', '축종명', '사육규모']]
     livestocks.columns = ['시도', '시군', '읍면동', 'EMD_CD', '축종명', '사육규모']
@@ -393,27 +408,15 @@ def run_livestock(livestock, emd, farm):
                                 index='EMD_CD',
                                 columns='축종명',
                                 values='사육규모', aggfunc='sum').reset_index()
-    st.write('livestocks pivot length')
-    st.write(len(livestocks))
-    st.write(livestocks[:100])
 
     farm_total_area = farm.groupby('EMD_CD')['축사면적'].sum().reset_index()
 
     farm_total_area.columns = ['EMD_CD', 'total_area']
     farm = farm.merge(farm_total_area, on='EMD_CD')
-    st.write('farm length')
-    st.write(len(farm))
-    st.write(farm[:100])
 
     farm['prop'] = farm['축사면적'] / farm['total_area']
 
-    st.write('livestocks len')
-    st.write(len(livestocks))
-    st.write(livestocks[:100])
     merge_frame = farm.merge(livestocks, on='EMD_CD')
-    st.write('merge frame len')
-    st.write(len(merge_frame))
-    st.write(merge_frame[:100])
 
     merge_frame['한우'] = merge_frame['prop'] * merge_frame['한우']
     merge_frame['젖소'] = merge_frame['prop'] * merge_frame['젖소']
@@ -422,13 +425,10 @@ def run_livestock(livestock, emd, farm):
     merge_frame['육계'] = merge_frame['prop'] * merge_frame['육계']
 
     merge_frame.groupby('gid')['한우', '젖소', '돼지', '육계', '산란계'].sum().reset_index()
-    st.write('group by')
-    st.write(merge_frame[:30])
 
     merge_frame = merge_frame.fillna(0)
     merge_frame['축산업'] = merge_frame['한우'] + merge_frame['젖소'] + merge_frame['돼지'] + merge_frame['육계'] + merge_frame[
         '산란계']
-
 
     merge_frame['한우'] = merge_frame['한우'].astype(int)
     merge_frame['젖소'] = merge_frame['젖소'].astype(int)
@@ -436,11 +436,10 @@ def run_livestock(livestock, emd, farm):
     merge_frame['육계'] = merge_frame['육계'].astype(int)
     merge_frame['산란계'] = merge_frame['산란계'].astype(int)
     merge_frame['축산업'] = merge_frame['축산업'].astype(int)
-    st.write(len(merge_frame))
 
     return merge_frame
 
-# 공용
+
 def building_comm(df) :
     df = df[(df['BDTYP_CD'].str[:2] == '10') |
             (df['BDTYP_CD'].str[:2] == '18') |
@@ -450,7 +449,7 @@ def building_comm(df) :
        ].reset_index(drop=True)
     return df
 
-# 편의
+
 def building_conv(df) :
     df = df[(df['BDTYP_CD'].str[:2] == '03') |
             (df['BDTYP_CD'].str[:2] == '04') |
@@ -462,7 +461,7 @@ def building_conv(df) :
        ].reset_index(drop=True)
     return df
 
-# 의료복지
+
 def building_medi(df):
     df = df[(df['BDTYP_CD'].str[:2] == '07') |
             (df['BDTYP_CD'].str[:2] == '03005') |
@@ -471,12 +470,11 @@ def building_medi(df):
     return df
 
 
-# 교육연구
 def building_edu(df):
     df = df[df['BDTYP_CD'].str[:2] == '08'].reset_index(drop=True)
     return df
 
-# 공업
+
 def building_indus(df):
     df = df[(df['BDTYP_CD'].str[:2] == '13') |
             (df['BDTYP_CD'].str[:2] == '14') |
@@ -486,52 +484,50 @@ def building_indus(df):
        ].reset_index(drop=True)
     return df
 
-def run_facil(c, buld, list_name, grid):
-    libraries = []
-    levels = []
-    images = []
+
+def run_facil(c_idx, buld, list_name, grid):
     sub_ph = st.empty()
     allData = []
 
     for i, k in zip(list_name, buld):
         sub_ph.success(i + ' 데이터셋 읽는 중...')
-        if c == '공용':
+        if c_idx == '공용':
             allData.append(building_comm(k))
-        elif c == '공업':
+        elif c_idx == '공업':
             allData.append(building_indus(k))
-        elif c == '교육연구':
+        elif c_idx == '교육연구':
             allData.append(building_edu(k))
-        elif c == '의료복지':
+        elif c_idx == '의료복지':
             allData.append(building_medi(k))
-        elif c == '편의':
+        elif c_idx == '편의':
             allData.append(building_conv(k))
         else:
             allData = None
 
     allData = pd.concat(allData, axis=0, ignore_index=True)
+    sub_ph.success(c_idx + '취약지표 계산중...')
 
-    if c == '의료복지' or c == '교육연구':
+    if c_idx == '의료복지' or c_idx == '교육연구':
         df_2 = gpd.overlay(grid, allData, how='intersection')
         df_3 = df_2.groupby(['gid'])['BDTYP_CD'].count().reset_index()
-        df_3.columns = ['gid', c]
-        st.write(df_3[:5])
+        df_3.columns = ['gid', c_idx]
+
     else:
-        if c == '공업':
+        if c_idx == '공업':
             allData['BDTYP_CD_'] = allData['BDTYP_CD'].apply(lambda x: "공장"
             if (x.startswith("13"))
             else ("창고시설" if x.startswith("14")
                   else ("위험물저장처리시설" if x.startswith("15")
                         else ("자동차관련시설" if x.startswith("16")
                               else "동식물관련시설"))))
-
-        elif c == '공용':
+        elif c_idx == '공용':
             allData['BDTYP_CD_'] = allData['BDTYP_CD'].apply(lambda x: "업무시설"
             if (x.startswith("10"))
             else ("분뇨,쓰레기처리시설" if x.startswith("18")
                   else ("공공용시설" if x.startswith("19")
                         else ("묘지관련시설" if x.startswith("20")
                               else "발전시설"))))
-        elif c == '편의':
+        elif c_idx == '편의':
             allData['BDTYP_CD_'] = allData['BDTYP_CD'].apply(lambda x: "제1종근린생활시설"
             if (x.startswith("03"))
             else ("제2종근린생활시설" if x.startswith("04")
@@ -547,20 +543,18 @@ def run_facil(c, buld, list_name, grid):
                               columns='BDTYP_CD_',
                               values='BSI_INT_SN', aggfunc='count').reset_index()
 
-        df_3[c] = df_3.sum(axis=1)
+        df_3[c_idx] = df_3.sum(axis=1)
+    sub_ph.success('계산 완료')
 
     save_path = './results/'
     library, level = save_and_processing(save_path,
                                         grid,
                                         df_3,
-                                        c)
+                                        c_idx, c_idx)
+
     img = Image.open(
-        save_path + 'grid_' + c + '.png')
+        save_path + 'grid_' + c_idx + '.png')
 
-    libraries.append(library)
-    levels.append(level)
-    images.append(img)
-
-    return libraries, levels, images
+    return library, level, img
 
 

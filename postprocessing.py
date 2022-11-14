@@ -62,6 +62,12 @@ def levels_to_csv(df, columns, folder, filename):
     level_3 = df[df['LEVEL'] == 3][columns].max()
 
     levels = pd.DataFrame([[df[df['LEVEL'] == 1][columns].min(), level_1], [level_1, level_2], [level_2, level_3], [level_3,df[columns].max()]], columns=['from', 'to'])
+    if columns=='농업' or columns=='도로':
+        levels = levels.astype('float')
+    else:
+        levels = levels.astype('int')
+
+
     levels.to_csv(f'{folder}/{filename}_levels.csv', encoding='CP949', index=False)
 
     return levels
