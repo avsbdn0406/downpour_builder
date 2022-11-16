@@ -42,6 +42,7 @@ if __name__ == "__main__":
     st.write(' ')
 
 
+
     st.subheader('대상체를 선택해주세요.')
     categories = ['01. 전국인구',
                                  '02. 생활인구',
@@ -254,8 +255,7 @@ if __name__ == "__main__":
                 placeholder.success('유아 및 고령 데이터 지표 구성...')
                 st.session_state.sido_df = make_tot_sido(st.session_state.data_01, st.session_state.data_02, st.session_state.data_03)
 
-                st.session_state.results,st.session_state.time_nm, st.session_state.df_list = run_people(st.session_state.dataset, st.session_state.base_grid,
-                           st.session_state.seoul_grid, st.session_state.sido_df)
+                st.session_state.results,st.session_state.time_nm, st.session_state.df_list = run_people(st.session_state.dataset, st.session_state.base_grid, st.session_state.seoul_grid, st.session_state.sido_df)
 
                 st.session_state.libraries = []
                 st.session_state.images = []

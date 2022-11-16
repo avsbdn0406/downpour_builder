@@ -1,16 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
-
-
-import os
-import glob
-
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import streamlit as st
 
 import geopandas as gpd
 import mapclassify as mc
@@ -18,9 +10,6 @@ import matplotlib.patches as mpatches
 from PIL import ImageColor
 
 plt.rc('font', family='AppleGothic')
-
-
-# In[2]:
 
 
 def grid_ndra(grid_file, ndra_file, km_param=1000000):
@@ -39,9 +28,6 @@ def grid_ndra(grid_file, ndra_file, km_param=1000000):
     return grid, grid_ndra
 
 
-# In[3]:
-
-
 def natural_breaks(df, columns, folder, filename):
     classifier = mc.NaturalBreaks.make(k=4)
     df.to_csv(f'{folder}/{filename}.csv', encoding='cp949', index=False)
@@ -51,9 +37,6 @@ def natural_breaks(df, columns, folder, filename):
     df['LEVEL'] = df['LEVEL'].astype(int)
 
     return df
-
-
-# In[4]:
 
 
 def levels_to_csv(df, columns, folder, filename):
@@ -67,13 +50,9 @@ def levels_to_csv(df, columns, folder, filename):
     else:
         levels = levels.astype('int')
 
-
     levels.to_csv(f'{folder}/{filename}_levels.csv', encoding='CP949', index=False)
 
     return levels
-
-
-# In[5]:
 
 
 def draw_grid(grid, df, folder, category, filename, mode=1):

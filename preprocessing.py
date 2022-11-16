@@ -4,6 +4,7 @@ import streamlit as st
 import geopandas as gpd
 from PIL import Image
 from postprocessing import  natural_breaks, levels_to_csv, draw_grid
+import datetime as dt
 
 
 def convert_df(df):
@@ -88,16 +89,18 @@ def save_and_processing(save_path, grid, df, columns, filename):
     if not os.path.isdir(save_path):
         os.makedirs(save_path)
 
-    library = natural_breaks(df, columns, save_path, filename)
+    fd = dt.datetime.now()
+    filedate = str(fd.year) + str(fd.month) + str(fd.day) + str(fd.hour) + str(fd.minute) + str(fd.second)
+    library = natural_breaks(df, columns, save_path, filedate+'_'+filename)
 
     placeholder.empty()
     placeholder.warning('Impact level을 계산합니다.')
 
-    levels = levels_to_csv(library, columns, save_path, filename)
+    levels = levels_to_csv(library, columns, save_path, filedate+'_'+filename)
     placeholder.empty()
     placeholder.warning(filename + ' 결과 이미지를 저장중 입니다.')
 
-    draw_grid(grid, df, save_path, columns, filename, mode=1)
+    draw_grid(grid, df, save_path, columns, filedate+'_'+filename, mode=1)
     placeholder.warning(filename + ' 결과 이미지 저장 완료.')
 
     return library, levels
