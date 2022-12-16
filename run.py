@@ -1,5 +1,6 @@
 import os
 from PIL import Image
+from pathlib import Path
 
 import pandas as pd
 import streamlit as st
@@ -123,7 +124,7 @@ if __name__ == "__main__":
             placeholder.success('고령 데이터 읽기 완료')
 
         if 'data_01' in st.session_state and 'data_02' in st.session_state and 'data_03' in st.session_state:
-            root_path = './dataset/'
+            root_path = str(Path(__file__).parent)+'/dataset/'
             grid_path = root_path + 'grid_test.shp'
 
             if 'levels' not in st.session_state:
@@ -234,7 +235,7 @@ if __name__ == "__main__":
             placeholder.success('고령 데이터 읽기 완료')
 
         if 'dataset' in st.session_state and 'data_01' in st.session_state and 'data_02' in st.session_state and 'data_03' in st.session_state:
-            root_path = './dataset/'
+            root_path = str(Path(__file__).parent)+'/dataset/'
             grid_path = root_path + 'grid_test.shp'
             seoul_path = root_path + '서울시_격자.shp'
             base_path = root_path + '서울시_base.shp'
@@ -300,7 +301,7 @@ if __name__ == "__main__":
             placeholder.success('도로 데이터 읽기 완료')
 
         if 'dataset' in st.session_state:
-            root_path = './dataset/'
+            root_path = str(Path(__file__).parent)+'/dataset/'
             grid_path = root_path + 'grid_test.shp'
 
             if 'levels' not in st.session_state:
@@ -348,7 +349,7 @@ if __name__ == "__main__":
             placeholder.success('농업 데이터 읽기 완료')
 
         if 'arch' in st.session_state:
-            root_path = './dataset/'
+            root_path = str(Path(__file__).parent)+'/dataset/'
             grid_path = root_path + 'grid_test.shp'
             ndra_path = root_path + '자연재해위험지구.shp'
 
@@ -380,7 +381,7 @@ if __name__ == "__main__":
         st.session_state.c_list = ['공업','공용','교육연구','의료복지','편의']
         st.session_state.c_list.sort()
         if 'grid' not in st.session_state:
-            root_path = './dataset/'
+            root_path = str(Path(__file__).parent)+'/dataset/'
             grid_path = root_path + 'grid_test.shp'
             placeholder = st.empty()
             placeholder.success('전국격자지도 읽는 중 ...')
@@ -505,7 +506,7 @@ if __name__ == "__main__":
             placeholder.success('EMD 데이터 읽기 완료')
 
         if 'livestock' in st.session_state and 'buld' in st.session_state and 'emd' in st.session_state:
-            root_path = './dataset/'
+            root_path = str(Path(__file__).parent)+'/dataset/'
             grid_path = root_path + 'grid_test.shp'
 
             if 'levels' not in st.session_state:
