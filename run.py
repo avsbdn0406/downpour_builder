@@ -1,3 +1,4 @@
+export STREAMLIT_SERVER_MAX_UPLOAD_SIZE=20480
 import os
 from PIL import Image
 
