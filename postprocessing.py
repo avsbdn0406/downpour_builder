@@ -3,7 +3,6 @@
 
 import pandas as pd
 import matplotlib.pyplot as plt
-import matplotlib
 import geopandas as gpd
 import mapclassify as mc
 import matplotlib.patches as mpatches
