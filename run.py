@@ -42,8 +42,6 @@ if __name__ == "__main__":
     st.write(' ')
     st.write(' ')
 
-
-
     st.subheader('대상체를 선택해주세요.')
     categories = ['01. 전국인구',
                                  '02. 생활인구',
@@ -75,7 +73,7 @@ if __name__ == "__main__":
                 placeholder.success(uploaded_file.name + ' 데이터 읽는 중...')
                 bar_tot.progress(int(100/len(tmp) * (idx+1)))
                 if uploaded_file.name.split('.')[-1]=='dbf':
-                    s = str(uploaded_file.getvalue()[120:],'utf-8')
+                    s = str(uploaded_file.getvalue()[120:], 'utf-8')
                     s = ' '.join(s.split())
                     txt_list = s.split(' ')
                     df = make_life(txt_list)
@@ -132,7 +130,7 @@ if __name__ == "__main__":
                 placeholder = st.empty()
 
                 st.session_state.df = main_life(st.session_state.data_01, st.session_state.data_02, st.session_state.data_03)
-                st.session_state.save_path = './results/'
+                st.session_state.save_path = str(Path(__file__).parent)+ '/results/'
                 if not os.path.isdir(st.session_state.save_path):
                     os.makedirs(st.session_state.save_path)
                 st.session_state.library, st.session_state.levels = save_and_processing(st.session_state.save_path,st.session_state.grid, st.session_state.df, st.session_state.category,st.session_state.category)
@@ -145,7 +143,7 @@ if __name__ == "__main__":
     elif c_idx == 1:
         st.session_state.category = '생활인구'
 
-        st.write('생활 인구 데이터')
+        st.write('서울시 생활 인구 데이터')
 
         tmp = st.file_uploader('Please choose a file.', accept_multiple_files=True, type='csv', key='0')
         if tmp is not None and len(tmp) !=0 and 'dataset' not in st.session_state:
@@ -165,8 +163,8 @@ if __name__ == "__main__":
             placeholder.success('데이터 읽기 완료.')
             st.session_state.dataset = pd.concat(dataset,ignore_index=True)
 
-        st.write('총 인구 데이터')
-        tmp = st.file_uploader('Please choose a file.', accept_multiple_files=True, type='dbf', key='1')
+        st.write('서울시 총 인구 데이터')
+        tmp = st.file_uploader('Please choose a file.', accept_multiple_files=False, type='dbf', key='1')
         if tmp is not None and len(tmp) !=0 and 'data_01' not in st.session_state:
             bar_tot = st.progress(0)
             df_tot = []
@@ -188,7 +186,7 @@ if __name__ == "__main__":
             st.session_state.data_01 = df_tot
             placeholder.success('총인구 데이터 읽기 완료')
 
-        st.write('유아 데이터')
+        st.write('서울시 유아 데이터')
         tmp = st.file_uploader('Please choose a file.', accept_multiple_files=True, type='dbf', key='2')
         if tmp is not None and len(tmp) != 0 and 'data_02' not in st.session_state:
             bar_child = st.progress(0)
@@ -211,7 +209,7 @@ if __name__ == "__main__":
             st.session_state.data_02 = df_child
             placeholder.success('유아 데이터 읽기 완료')
 
-        st.write('고령 데이터')
+        st.write('서울시 고령 데이터')
         tmp = st.file_uploader('Please choose a file.', accept_multiple_files=True, type='dbf', key='3')
         if tmp is not None and len(tmp) != 0 and 'data_03' not in st.session_state:
             bar_elder = st.progress(0)
@@ -262,7 +260,7 @@ if __name__ == "__main__":
                 st.session_state.images = []
                 st.session_state.levels = []
                 st.session_state.save_files = []
-                st.session_state.save_path = os.path.join('./results/', st.session_state.category, st.session_state.m)
+                st.session_state.save_path = os.path.join(str(Path(__file__).parent),'/results/', st.session_state.category, st.session_state.m)
 
                 for res, day in zip(st.session_state.results, st.session_state.df_list):
                     for times in range(1,len(st.session_state.time_nm)+1):
@@ -317,7 +315,7 @@ if __name__ == "__main__":
                 st.session_state.df = classify_traffic(st.session_state.df)
                 st.session_state.df = run_traffic(st.session_state.df)
 
-                st.session_state.save_path = './results/'
+                st.session_state.save_path = str(Path(__file__).parent)+'/results/'
                 st.session_state.library, st.session_state.levels = save_and_processing(st.session_state.save_path,st.session_state.grid, st.session_state.df, st.session_state.category, st.session_state.category)
                 st.session_state.img = Image.open(st.session_state.save_path + 'grid_' + st.session_state.category + '.png')
 
@@ -361,7 +359,7 @@ if __name__ == "__main__":
                 st.session_state.arch_overlay = gpd.overlay(st.session_state.grid, st.session_state.arch, how = 'intersection')
 
                 st.session_state.df = make_arch(st.session_state.arch_overlay, st.session_state.grid_ndra)
-                st.session_state.save_path = './results/'
+                st.session_state.save_path = str(Path(__file__).parent)+'/results/'
                 st.session_state.library, st.session_state.levels = save_and_processing(st.session_state.save_path,
                                                                                         st.session_state.grid,
                                                                                         st.session_state.df,
@@ -422,7 +420,7 @@ if __name__ == "__main__":
             sub_category = st.selectbox('', st.session_state.c_list)
             sub_cidx = st.session_state.c_list.index(sub_category)
 
-            st.session_state.save_path = './results/'
+            st.session_state.save_path = str(Path(__file__).parent)+'/results/'
             st.session_state.sub_cidx = sub_category
             st.session_state.library, st.session_state.level, st.session_state.img = run_facil(st.session_state.sub_cidx, st.session_state.buld,
                                             st.session_state.list_name, st.session_state.grid)
@@ -518,7 +516,7 @@ if __name__ == "__main__":
                 st.session_state.farm, st.session_state.emd = make_buld_emd(st.session_state.buld, st.session_state.emd, st.session_state.grid, st.session_state.list_name)
                 st.session_state.df = run_livestock(st.session_state.livestock, st.session_state.emd, st.session_state.farm)
 
-                st.session_state.save_path = './results/'
+                st.session_state.save_path = str(Path(__file__).parent)+'/results/'
                 st.session_state.library, st.session_state.levels = save_and_processing(st.session_state.save_path,
                                                                                         st.session_state.grid,
                                                                                         st.session_state.df,
