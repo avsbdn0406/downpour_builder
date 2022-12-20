@@ -1,3 +1,4 @@
-default-jre
-korean*
-fonts-unfonts-core
+#default-jre
+#korean*
+#fonts-unfonts-core
+libspatialindex-dev
