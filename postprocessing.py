@@ -3,11 +3,14 @@
 
 import pandas as pd
 import matplotlib.pyplot as plt
-
+import matplotlib
 import geopandas as gpd
 import mapclassify as mc
 import matplotlib.patches as mpatches
 from PIL import ImageColor
+
+matplotlib.font_manager._rebuild()
+
 
 
 def grid_ndra(grid_file, ndra_file, km_param=1000000):
