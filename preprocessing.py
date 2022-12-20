@@ -107,7 +107,7 @@ def save_and_processing(save_path, grid, df, columns, filename):
     return library, levels, img_filename
 
 
-def show_button(save_path, levels, img, library, file_name):
+def show_button(save_path, levels, img, library, file_name, img_filename):
     st.header(file_name)
 
     st.subheader('Impact Levels')
@@ -135,7 +135,7 @@ def show_button(save_path, levels, img, library, file_name):
         key=file_name + '_1'
     )
 
-    with open(save_path + '/grid_' + file_name + '.png',
+    with open(save_path + img_filename,
               'rb') as img_save:
         st.download_button(
             label="이미지 저장하기",

@@ -125,7 +125,6 @@ if __name__ == "__main__":
             root_path = str(Path(__file__).parent)+'/dataset/'
             grid_path = root_path + 'grid_test.shp'
 
-            st.write(root_path)
 
             if 'levels' not in st.session_state:
                 st.session_state.grid = gpd.read_file(grid_path).to_crs(epsg=5179)
@@ -134,7 +133,7 @@ if __name__ == "__main__":
                 st.session_state.df = main_life(st.session_state.data_01, st.session_state.data_02, st.session_state.data_03)
                 st.session_state.save_path = str(Path(__file__).parent)+'/results/'
 
-                st.write(st.session_state.save_path)
+
                 if not os.path.isdir(st.session_state.save_path):
                     os.makedirs(st.session_state.save_path)
                 st.session_state.library, st.session_state.levels, st.session_state.img_filename = save_and_processing(st.session_state.save_path,st.session_state.grid, st.session_state.df, st.session_state.category,st.session_state.category)
@@ -142,7 +141,7 @@ if __name__ == "__main__":
 
             if 'img' in st.session_state and 'library' in st.session_state and 'levels' in st.session_state:
                 show_button(st.session_state.save_path, st.session_state.levels,st.session_state.img,
-                            st.session_state.library, st.session_state.category)
+                            st.session_state.library, st.session_state.category,st.session_state.img_filename)
 
     elif c_idx == 1:
         st.session_state.category = '생활인구'
@@ -269,8 +268,10 @@ if __name__ == "__main__":
                 for res, day in zip(st.session_state.results, st.session_state.df_list):
                     for times in range(1,len(st.session_state.time_nm)+1):
                         save_file = day+'_' + st.session_state.category + '_' + st.session_state.time_nm[times]
-                        st.session_state.library, st.session_state.level = save_and_processing(st.session_state.save_path, st.session_state.grid, res, st.session_state.category, save_file)
-                        st.session_state.img = Image.open(st.session_state.save_path + '/grid_' + save_file + '.png')
+                        st.session_state.library, st.session_state.levels, st.session_state.img_filename = save_and_processing(
+                            st.session_state.save_path, st.session_state.grid, st.session_state.df,
+                            st.session_state.category, st.session_state.category)
+                        st.session_state.img = Image.open(st.session_state.save_path + st.session_state.img_filename)
 
                         st.session_state.libraries.append(st.session_state.library)
                         st.session_state.levels.append(st.session_state.level)
@@ -280,7 +281,9 @@ if __name__ == "__main__":
             if 'images' in st.session_state and 'libraries' in st.session_state and 'levels' in st.session_state:
                 for f_name, level, library, img in zip(st.session_state.save_files, st.session_state.levels,
                                                   st.session_state.libraries, st.session_state.images):
-                    show_button(st.session_state.save_path, level, img, library, f_name)
+                    show_button(st.session_state.save_path, st.session_state.levels, st.session_state.img,
+                                st.session_state.library, st.session_state.category, st.session_state.img_filename)
+
 
     elif c_idx == 2:
         st.session_state.category = '도로'
@@ -320,12 +323,15 @@ if __name__ == "__main__":
                 st.session_state.df = run_traffic(st.session_state.df)
 
                 st.session_state.save_path = str(Path(__file__).parent)+'/results/'
-                st.session_state.library, st.session_state.levels = save_and_processing(st.session_state.save_path,st.session_state.grid, st.session_state.df, st.session_state.category, st.session_state.category)
-                st.session_state.img = Image.open(st.session_state.save_path + 'grid_' + st.session_state.category + '.png')
+                st.session_state.library, st.session_state.levels, st.session_state.img_filename = save_and_processing(
+                    st.session_state.save_path, st.session_state.grid, st.session_state.df, st.session_state.category,
+                    st.session_state.category)
+                st.session_state.img = Image.open(st.session_state.save_path + st.session_state.img_filename)
 
-            if 'img' in st.session_state and 'library' in st.session_state and 'levels' in st.session_state:
-                show_button(st.session_state.save_path, st.session_state.levels,st.session_state.img,
-                            st.session_state.library, st.session_state.category)
+        if 'img' in st.session_state and 'library' in st.session_state and 'levels' in st.session_state:
+                show_button(st.session_state.save_path, st.session_state.levels, st.session_state.img,
+                            st.session_state.library, st.session_state.category, st.session_state.img_filename)
+
 
     elif c_idx == 3:
         st.session_state.category = '농업'
@@ -364,17 +370,14 @@ if __name__ == "__main__":
 
                 st.session_state.df = make_arch(st.session_state.arch_overlay, st.session_state.grid_ndra)
                 st.session_state.save_path = str(Path(__file__).parent)+'/results/'
-                st.session_state.library, st.session_state.levels = save_and_processing(st.session_state.save_path,
-                                                                                        st.session_state.grid,
-                                                                                        st.session_state.df,
-                                                                                        st.session_state.category,
-                                                                                        st.session_state.category)
-                st.session_state.img = Image.open(
-                    st.session_state.save_path + 'grid_' + st.session_state.category + '.png')
+                st.session_state.library, st.session_state.levels, st.session_state.img_filename = save_and_processing(
+                    st.session_state.save_path, st.session_state.grid, st.session_state.df, st.session_state.category,
+                    st.session_state.category)
+                st.session_state.img = Image.open(st.session_state.save_path + st.session_state.img_filename)
 
             if 'img' in st.session_state and 'library' in st.session_state and 'levels' in st.session_state:
                 show_button(st.session_state.save_path, st.session_state.levels, st.session_state.img,
-                            st.session_state.library, st.session_state.category)
+                            st.session_state.library, st.session_state.category, st.session_state.img_filename)
 
     elif c_idx == 4:
         st.session_state.category = '시설'
@@ -430,8 +433,8 @@ if __name__ == "__main__":
                                             st.session_state.list_name, st.session_state.grid)
 
             if 'img' in st.session_state and 'library' in st.session_state and 'level' in st.session_state:
-                show_button(st.session_state.save_path, st.session_state.level, st.session_state.img,
-                            st.session_state.library, st.session_state.sub_cidx)
+                show_button(st.session_state.save_path, st.session_state.levels, st.session_state.img,
+                            st.session_state.library, st.session_state.category, st.session_state.img_filename)
 
     elif c_idx == 5:
         st.session_state.category = '축산업'
@@ -521,17 +524,15 @@ if __name__ == "__main__":
                 st.session_state.df = run_livestock(st.session_state.livestock, st.session_state.emd, st.session_state.farm)
 
                 st.session_state.save_path = str(Path(__file__).parent)+'/results/'
-                st.session_state.library, st.session_state.levels = save_and_processing(st.session_state.save_path,
-                                                                                        st.session_state.grid,
-                                                                                        st.session_state.df,
-                                                                                        st.session_state.category,
-                                                                                        st.session_state.category)
-                st.session_state.img = Image.open(
-                    st.session_state.save_path + 'grid_' + st.session_state.category + '.png')
+                st.session_state.library, st.session_state.levels, st.session_state.img_filename = save_and_processing(
+                    st.session_state.save_path, st.session_state.grid, st.session_state.df, st.session_state.category,
+                    st.session_state.category)
+                st.session_state.img = Image.open(st.session_state.save_path + st.session_state.img_filename)
 
-            if 'img' in st.session_state and 'library' in st.session_state and 'levels' in st.session_state:
+
+        if 'img' in st.session_state and 'library' in st.session_state and 'levels' in st.session_state:
                 show_button(st.session_state.save_path, st.session_state.levels, st.session_state.img,
-                            st.session_state.library, st.session_state.category)
+                            st.session_state.library, st.session_state.category, st.session_state.img_filename)
 
 
 
