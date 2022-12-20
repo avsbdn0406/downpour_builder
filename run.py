@@ -125,12 +125,16 @@ if __name__ == "__main__":
             root_path = str(Path(__file__).parent)+'/dataset/'
             grid_path = root_path + 'grid_test.shp'
 
+            print(root_path)
+
             if 'levels' not in st.session_state:
                 st.session_state.grid = gpd.read_file(grid_path).to_crs(epsg=5179)
                 placeholder = st.empty()
 
                 st.session_state.df = main_life(st.session_state.data_01, st.session_state.data_02, st.session_state.data_03)
                 st.session_state.save_path = str(Path(__file__).parent)+ '/results/'
+
+                print(st.session_state.save_path)
                 if not os.path.isdir(st.session_state.save_path):
                     os.makedirs(st.session_state.save_path)
                 st.session_state.library, st.session_state.levels = save_and_processing(st.session_state.save_path,st.session_state.grid, st.session_state.df, st.session_state.category,st.session_state.category)
