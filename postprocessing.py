@@ -9,9 +9,7 @@ import mapclassify as mc
 import matplotlib.patches as mpatches
 from PIL import ImageColor
 
-matplotlib.font_manager._rebuild()
-
-
+plt.rc('font', family='NanumGothic')
 
 def grid_ndra(grid_file, ndra_file, km_param=1000000):
     grid = gpd.read_file(grid_file).to_crs(epsg=5179)
