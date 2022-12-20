@@ -137,8 +137,8 @@ if __name__ == "__main__":
                 st.write(st.session_state.save_path)
                 if not os.path.isdir(st.session_state.save_path):
                     os.makedirs(st.session_state.save_path)
-                st.session_state.library, st.session_state.levels = save_and_processing(st.session_state.save_path,st.session_state.grid, st.session_state.df, st.session_state.category,st.session_state.category)
-                st.session_state.img = Image.open(st.session_state.save_path + 'grid_' + st.session_state.category + '.png')
+                st.session_state.library, st.session_state.levels, st.session_state.img_filename = save_and_processing(st.session_state.save_path,st.session_state.grid, st.session_state.df, st.session_state.category,st.session_state.category)
+                st.session_state.img = Image.open(st.session_state.save_path + st.session_state.img_filename)
 
             if 'img' in st.session_state and 'library' in st.session_state and 'levels' in st.session_state:
                 show_button(st.session_state.save_path, st.session_state.levels,st.session_state.img,

@@ -101,9 +101,10 @@ def save_and_processing(save_path, grid, df, columns, filename):
     placeholder.warning(filename + ' 결과 이미지를 저장중 입니다.')
 
     draw_grid(grid, df, save_path, columns, filedate+'_'+filename, mode=1)
+    img_filename = 'grid_'+filedate+'_'+filename+'.png'
     placeholder.warning(filename + ' 결과 이미지 저장 완료.')
 
-    return library, levels
+    return library, levels, img_filename
 
 
 def show_button(save_path, levels, img, library, file_name):
