@@ -1,2 +1,3 @@
-language-pack-ko
+default-jre
 korean*
+fonts-unfonts-core
