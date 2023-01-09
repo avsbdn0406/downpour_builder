@@ -7,11 +7,11 @@ import streamlit as st
 
 import geopandas as gpd
 from shapely import wkt
+import calendar
 
 from preprocessing import make_life, main_life, save_and_processing, show_button, \
     make_traffic, classify_traffic, run_traffic, make_arch, make_livestock, make_buld_emd, run_livestock,\
     run_facil, make_people, make_tot_sido, run_people
-
 
 
 def grid_ndra(grid_file, ndra_file, km_param=1000000):
@@ -43,15 +43,11 @@ if __name__ == "__main__":
     st.write(' ')
 
     st.subheader('대상체를 선택해주세요.')
-    categories = ['01. 전국인구',
-                                 '02. 생활인구',
-                                 '03. 도로',
-                                 '04. 농업',
-                                 '05. 시설',
-                                 '06. 축산업']
+    categories = ['01. 전국인구','02. 생활인구','03. 도로','04. 농업','05. 시설','06. 축산업']
     category = st.selectbox('', categories)
 
     c_idx = categories.index(category)
+    server_dir = '/tmp/IRIS/'
 
     st.write(' ')
     st.write(' ')
@@ -61,90 +57,119 @@ if __name__ == "__main__":
     if c_idx == 0:
         dataset = []
         st.session_state.category = '전국_인구'
+        st.session_state.category_eng = 'life'
 
         st.write('총 인구 데이터')
         tmp = st.file_uploader('Please choose a file.', accept_multiple_files=True, type='dbf', key='0')
-        if tmp is not None and len(tmp) !=0 and 'data_01' not in st.session_state:
+        if tmp is not None and len(tmp) !=0 and 'data_tot' not in st.session_state:
             bar_tot = st.progress(0)
-            st.session_state.data_01 = []
+            data_tot = []
             placeholder = st.empty()
 
             for idx, uploaded_file in enumerate(tmp):
                 placeholder.success(uploaded_file.name + ' 데이터 읽는 중...')
                 bar_tot.progress(int(100/len(tmp) * (idx+1)))
                 if uploaded_file.name.split('.')[-1]=='dbf':
-                    s = str(uploaded_file.getvalue()[120:], 'utf-8')
-                    s = ' '.join(s.split())
-                    txt_list = s.split(' ')
-                    df = make_life(txt_list)
-                    st.session_state.data_01.append(df)
+                    try:
+                        s = str(uploaded_file.getvalue()[120:], 'utf-8')
+                        s = ' '.join(s.split())
+                        txt_list = s.split(' ')
+                        df = make_life(txt_list)
+                        data_tot.append(df)
+                    except UnicodeDecodeError as e:
+                        warns = st.empty()
+                        warns.warning('데이터 구성 형식이 올바르지 않습니다. 새로고침 후 올바른 데이터를 입력해주세요. 프로그램을 종료합니다.')
+                        st.stop()
 
-            st.session_state.data_01 = pd.concat(st.session_state.data_01, ignore_index=True)
+                else:
+                    warns = st.empty()
+                    warns.warning(uploaded_file.name+' 파일은 dbf 확장자가 아니므로 제외됩니다.')
+
+            st.session_state.data_tot = pd.concat(data_tot, ignore_index=True)
             placeholder.success('총인구 데이터 읽기 완료')
 
         st.write('유아 데이터')
         tmp = st.file_uploader('Please choose a file.', accept_multiple_files=True, type='dbf', key='1')
-        if tmp is not None and len(tmp) != 0 and 'data_02' not in st.session_state:
+        if tmp is not None and len(tmp) != 0 and 'data_child' not in st.session_state:
             bar_child = st.progress(0)
-            st.session_state.data_02 = []
+            data_child = []
             placeholder = st.empty()
 
             for idx, uploaded_file in enumerate(tmp):
                 placeholder.success(uploaded_file.name + ' 데이터 읽는 중...')
                 bar_child.progress(int(100 / len(tmp) * (idx + 1)))
                 if uploaded_file.name.split('.')[-1] == 'dbf':
-                    s = str(uploaded_file.getvalue()[120:], 'utf-8')
-                    s = ' '.join(s.split())
-                    txt_list = s.split(' ')
-                    df = make_life(txt_list)
-                    st.session_state.data_02.append(df)
+                    try:
+                        s = str(uploaded_file.getvalue()[120:], 'utf-8')
+                        s = ' '.join(s.split())
+                        txt_list = s.split(' ')
+                        df = make_life(txt_list)
+                        data_child.append(df)
+                    except UnicodeDecodeError as e:
+                        warns = st.empty()
+                        warns.warning('데이터 구성 형식이 올바르지 않습니다. 새로고침 후 올바른 데이터를 입력해주세요. 프로그램을 종료합니다.')
+                        st.stop()
+                else:
+                    warns = st.empty()
+                    warns.warning(uploaded_file.name+' 파일은 dbf 확장자가 아니므로 제외됩니다.')
 
-            st.session_state.data_02 = pd.concat(st.session_state.data_02, ignore_index=True)
+            st.session_state.data_child = pd.concat(data_child, ignore_index=True)
             placeholder.success('유아 데이터 읽기 완료')
 
         st.write('고령 데이터')
         tmp = st.file_uploader('Please choose a file.', accept_multiple_files=True, type='dbf', key='2')
-        if tmp is not None and len(tmp) != 0 and 'data_03' not in st.session_state:
+        if tmp is not None and len(tmp) != 0 and 'data_elder' not in st.session_state:
             bar_elder = st.progress(0)
-            st.session_state.data_03 = []
+            data_elder = []
             placeholder = st.empty()
 
             for idx, uploaded_file in enumerate(tmp):
                 placeholder.success(uploaded_file.name + ' 데이터 읽는 중...')
                 bar_elder.progress(int(100 / len(tmp) * (idx + 1)))
                 if uploaded_file.name.split('.')[-1] == 'dbf':
-                    s = str(uploaded_file.getvalue()[120:], 'utf-8')
-                    s = ' '.join(s.split())
-                    txt_list = s.split(' ')
-                    df = make_life(txt_list)
-                    st.session_state.data_03.append(df)
-            st.session_state.data_03 = pd.concat(st.session_state.data_03, ignore_index=True)
+                    try:
+                        s = str(uploaded_file.getvalue()[120:], 'utf-8')
+                        s = ' '.join(s.split())
+                        txt_list = s.split(' ')
+                        df = make_life(txt_list)
+                        data_elder.append(df)
+                    except UnicodeDecodeError as e:
+                        warns = st.empty()
+                        warns.warning('데이터 구성 형식이 올바르지 않습니다. 새로고침 후 올바른 데이터를 입력해주세요. 프로그램을 종료합니다.')
+                        st.stop()
+                else:
+                    warns = st.empty()
+                    warns.warning(uploaded_file.name+' 파일은 dbf 확장자가 아니므로 제외됩니다.')
+
+            st.session_state.data_elder = pd.concat(data_elder, ignore_index=True)
             placeholder.success('고령 데이터 읽기 완료')
 
-        if 'data_01' in st.session_state and 'data_02' in st.session_state and 'data_03' in st.session_state:
+        if 'data_tot' in st.session_state and 'data_child' in st.session_state and 'data_elder' in st.session_state:
             root_path = str(Path(__file__).parent)+'/dataset/'
             grid_path = root_path + 'grid_test.shp'
-
 
             if 'levels' not in st.session_state:
                 st.session_state.grid = gpd.read_file(grid_path).to_crs(epsg=5179)
                 placeholder = st.empty()
 
-                st.session_state.df = main_life(st.session_state.data_01, st.session_state.data_02, st.session_state.data_03)
-                st.session_state.save_path = str(Path(__file__).parent)+'/results/'
-
+                st.session_state.df = main_life(st.session_state.data_tot, st.session_state.data_child, st.session_state.data_elder)
+                st.session_state.save_path = server_dir
 
                 if not os.path.isdir(st.session_state.save_path):
-                    os.makedirs(st.session_state.save_path)
-                st.session_state.library, st.session_state.levels, st.session_state.img_filename = save_and_processing(st.session_state.save_path,st.session_state.grid, st.session_state.df, st.session_state.category,st.session_state.category)
-                st.session_state.img = Image.open(st.session_state.save_path + st.session_state.img_filename)
+                    save_warns = st.empty()
+                    save_warns.warning('저장 경로가 존재하지 않습니다. 관리자에게 문의하세요.')
+                st.session_state.library, st.session_state.levels = save_and_processing(st.session_state.save_path,st.session_state.grid, st.session_state.df, st.session_state.category,st.session_state.category_eng)
+                st.session_state.img_filename = 'grid_'+st.session_state.category_eng+'.png'
+                st.session_state.img = Image.open( st.session_state.save_path + st.session_state.img_filename)
 
             if 'img' in st.session_state and 'library' in st.session_state and 'levels' in st.session_state:
+                st.header(st.session_state.category)
                 show_button(st.session_state.save_path, st.session_state.levels,st.session_state.img,
-                            st.session_state.library, st.session_state.category,st.session_state.img_filename)
+                            st.session_state.library, st.session_state.category_eng, st.session_state.img_filename)
 
     elif c_idx == 1:
         st.session_state.category = '생활인구'
+        st.session_state.category_eng = 'lifeman'
 
         st.write('서울시 생활 인구 데이터')
 
@@ -155,87 +180,116 @@ if __name__ == "__main__":
             placeholder = st.empty()
 
             for idx, uploaded_file in enumerate(tmp):
-                st.session_state.y = uploaded_file.name.split('_')[2][:4]
-                st.session_state.m = uploaded_file.name.split('_')[2][4:6]
-                d = uploaded_file.name.split('_')[2][6:8]
-                placeholder.success(st.session_state.y+'년 '+st.session_state.m+'월 '+d+'일 데이터 읽는 중...')
-                bar_people.progress(int(100/len(tmp) * (idx+1)))
-                if uploaded_file.name.split('.')[-1] == 'csv':
-                    df = make_people(uploaded_file)
-                    dataset.append(df)
+                if len(uploaded_file.name)!=25:
+                    warns = st.empty()
+                    warns.warning(uploaded_file.name + ' : 잘못된 형식의 파일명입니다. 매뉴얼을 참고하세요. 새로고침 후 올바른 데이터를 입력해주세요. 프로그램이 종료됩니다.')
+                    st.stop()
+                else:
+                    y = uploaded_file.name.split('_')[2][:4]
+                    m = uploaded_file.name.split('_')[2][4:6]
+                    st.session_state.m = calendar.month_abbr[int(m)]
+                    d = uploaded_file.name.split('_')[2][6:8]
+                    placeholder.success(y+'년 '+m+'월 '+d+'일 데이터 읽는 중...')
+                    bar_people.progress(int(100/len(tmp) * (idx+1)))
+
+                    if uploaded_file.name.split('.')[-1] == 'csv':
+                        try:
+                            df = make_people(uploaded_file)
+                            dataset.append(df)
+                        except UnicodeDecodeError as e:
+                            warns = st.empty()
+                            warns.warning('데이터 구성 형식이 올바르지 않습니다. 새로고침 후 올바른 데이터를 입력해주세요. 프로그램을 종료합니다.')
+                            st.stop()
+
             placeholder.success('데이터 읽기 완료.')
             st.session_state.dataset = pd.concat(dataset,ignore_index=True)
 
         st.write('서울시 총 인구 데이터')
         tmp = st.file_uploader('Please choose a file.', accept_multiple_files=False, type='dbf', key='1')
-        if tmp is not None and len(tmp) !=0 and 'data_01' not in st.session_state:
+        if tmp is not None and 'data_tot' not in st.session_state:
             bar_tot = st.progress(0)
             df_tot = []
             placeholder = st.empty()
+            placeholder.success(tmp.name + ' 데이터 읽는 중...')
 
-            for idx, uploaded_file in enumerate(tmp):
-                placeholder.success(uploaded_file.name + ' 데이터 읽는 중...')
-                bar_tot.progress(int(100/len(tmp) * (idx+1)))
-                if uploaded_file.name.split('.')[-1]=='dbf':
-                    s = str(uploaded_file.getvalue()[120:],'utf-8')
+            if tmp.name.split('.')[-1] == 'dbf':
+                try:
+                    s = str(tmp.getvalue()[120:], 'utf-8')
                     s = ' '.join(s.split())
                     txt_list = s.split(' ')
                     df = make_life(txt_list)
                     df_tot.append(df)
 
-            df_tot = pd.concat(df_tot, ignore_index=True)
-            df_tot = df_tot[['gid', 'val']].groupby('gid')['val'].sum().reset_index()
-            df_tot.columns = ['gid', '총인구']
-            st.session_state.data_01 = df_tot
-            placeholder.success('총인구 데이터 읽기 완료')
+                    st.session_state.data_tot = pd.concat(df_tot, ignore_index=True)
+                    del df_tot
+                    placeholder.success('총인구 데이터 읽기 완료')
+
+                except UnicodeDecodeError as e:
+                    warns = st.empty()
+                    warns.warning('데이터 구성 형식이 올바르지 않습니다. 새로고침 후 올바른 데이터를 입력해주세요. 프로그램을 종료합니다.')
+                    st.stop()
+            else:
+                warns = st.empty()
+                warns.warning(tmp.name+' 파일은 dbf 확장자가 아니므로 제외됩니다.')
+
 
         st.write('서울시 유아 데이터')
-        tmp = st.file_uploader('Please choose a file.', accept_multiple_files=True, type='dbf', key='2')
-        if tmp is not None and len(tmp) != 0 and 'data_02' not in st.session_state:
+        tmp = st.file_uploader('Please choose a file.', accept_multiple_files=False, type='dbf', key='2')
+        if tmp is not None and 'data_child' not in st.session_state:
             bar_child = st.progress(0)
             df_child = []
             placeholder = st.empty()
+            placeholder.success(tmp.name + ' 데이터 읽는 중...')
 
-            for idx, uploaded_file in enumerate(tmp):
-                placeholder.success(uploaded_file.name + ' 데이터 읽는 중...')
-                bar_child.progress(int(100 / len(tmp) * (idx + 1)))
-                if uploaded_file.name.split('.')[-1] == 'dbf':
-                    s = str(uploaded_file.getvalue()[120:], 'utf-8')
+            if tmp.name.split('.')[-1] == 'dbf':
+                try:
+                    s = str(tmp.getvalue()[120:], 'utf-8')
                     s = ' '.join(s.split())
                     txt_list = s.split(' ')
                     df = make_life(txt_list)
                     df_child.append(df)
+                    st.session_state.data_child = pd.concat(df_child, axis=0, ignore_index=True)
+                    del df_child
+                    placeholder.success('유아 데이터 읽기 완료')
 
-            df_child = pd.concat(df_child, axis=0, ignore_index=True)
-            df_child = df_child[['gid', 'val']].groupby('gid')['val'].sum().reset_index()
-            df_child.columns = ['gid', '유아']
-            st.session_state.data_02 = df_child
-            placeholder.success('유아 데이터 읽기 완료')
+                except UnicodeDecodeError as e:
+                    warns = st.empty()
+                    warns.warning('데이터 구성 형식이 올바르지 않습니다. 새로고침 후 올바른 데이터를 입력해주세요. 프로그램을 종료합니다.')
+                    st.stop()
+            else:
+                warns = st.empty()
+                warns.warning(tmp.name + ' 파일은 dbf 확장자가 아니므로 제외됩니다.')
+
 
         st.write('서울시 고령 데이터')
-        tmp = st.file_uploader('Please choose a file.', accept_multiple_files=True, type='dbf', key='3')
-        if tmp is not None and len(tmp) != 0 and 'data_03' not in st.session_state:
+        tmp = st.file_uploader('Please choose a file.', accept_multiple_files=False, type='dbf', key='3')
+        if tmp is not None and 'data_elder' not in st.session_state:
             bar_elder = st.progress(0)
             df_elder = []
             placeholder = st.empty()
+            placeholder.success(tmp.name + ' 데이터 읽는 중...')
 
-            for idx, uploaded_file in enumerate(tmp):
-                placeholder.success(uploaded_file.name + ' 데이터 읽는 중...')
-                bar_elder.progress(int(100 / len(tmp) * (idx + 1)))
-                if uploaded_file.name.split('.')[-1] == 'dbf':
-                    s = str(uploaded_file.getvalue()[120:], 'utf-8')
+            if tmp.name.split('.')[-1] == 'dbf':
+                try:
+                    s = str(tmp.getvalue()[120:], 'utf-8')
                     s = ' '.join(s.split())
                     txt_list = s.split(' ')
                     df = make_life(txt_list)
                     df_elder.append(df)
-            df_elder = pd.concat(df_elder, ignore_index=True)
-            df_elder = df_elder[['gid', 'val']].groupby('gid')['val'].sum().reset_index()
-            df_elder.columns = ['gid', '고령']
-            st.session_state.data_03 = df_elder
+                    st.session_state.data_elder = pd.concat(df_elder, ignore_index=True)
 
-            placeholder.success('고령 데이터 읽기 완료')
+                    placeholder.success('고령 데이터 읽기 완료')
+                    del df_elder
 
-        if 'dataset' in st.session_state and 'data_01' in st.session_state and 'data_02' in st.session_state and 'data_03' in st.session_state:
+                except UnicodeDecodeError as e:
+                    warns = st.empty()
+                    warns.warning('데이터 구성 형식이 올바르지 않습니다. 새로고침 후 올바른 데이터를 입력해주세요. 프로그램을 종료합니다.')
+                    st.stop()
+            else:
+                warns = st.empty()
+                warns.warning(tmp.name + ' 파일은 dbf 확장자가 아니므로 제외됩니다.')
+
+        if 'dataset' in st.session_state and 'data_tot' in st.session_state and 'data_child' in st.session_state and 'data_elder' in st.session_state:
             root_path = str(Path(__file__).parent)+'/dataset/'
             grid_path = root_path + 'grid_test.shp'
             seoul_path = root_path + '서울시_격자.shp'
@@ -255,38 +309,47 @@ if __name__ == "__main__":
                 st.session_state.base_grid = st.session_state.base_grid.set_crs(epsg=5179, allow_override=True)
 
                 placeholder.success('유아 및 고령 데이터 지표 구성...')
-                st.session_state.sido_df = make_tot_sido(st.session_state.data_01, st.session_state.data_02, st.session_state.data_03)
 
-                st.session_state.results,st.session_state.time_nm, st.session_state.df_list = run_people(st.session_state.dataset, st.session_state.base_grid, st.session_state.seoul_grid, st.session_state.sido_df)
+                st.session_state.sido_df = make_tot_sido(st.session_state.data_tot, st.session_state.data_child, st.session_state.data_elder)
+
+                st.session_state.results, st.session_state.time_nm, st.session_state.df_list = run_people(st.session_state.dataset, st.session_state.base_grid, st.session_state.seoul_grid, st.session_state.sido_df)
 
                 st.session_state.libraries = []
                 st.session_state.images = []
                 st.session_state.levels = []
-                st.session_state.save_files = []
-                st.session_state.save_path = os.path.join(str(Path(__file__).parent),'/results/', st.session_state.category, st.session_state.m)
+                st.session_state.filenames = []
+                st.session_state.sub_headers = []
+                st.session_state.save_path = server_dir
 
-                for res, day in zip(st.session_state.results, st.session_state.df_list):
+                st.session_state.time_eng = {1: 'morning', 2: 'afternoon', 3: 'dinner', 4: 'nighttime'}
+                day_eng = {'평일':'week', '주말':'weekend'}
+
+                for res, day, day_kor in zip(st.session_state.results, day_eng.values(),day_eng):
                     for times in range(1,len(st.session_state.time_nm)+1):
-                        save_file = day+'_' + st.session_state.category + '_' + st.session_state.time_nm[times]
-                        st.session_state.library, st.session_state.levels, st.session_state.img_filename = save_and_processing(
-                            st.session_state.save_path, st.session_state.grid, st.session_state.df,
-                            st.session_state.category, st.session_state.category)
+                        # Define filename
+                        save_file = st.session_state.category_eng + '_' + st.session_state.m+'_'+ day + '_' + st.session_state.time_eng[times]
+                        st.session_state.library, st.session_state.level = save_and_processing(
+                            st.session_state.save_path, st.session_state.grid, res,
+                            st.session_state.category, save_file)
+                        st.session_state.img_filename = 'grid_' + save_file + '.png'
                         st.session_state.img = Image.open(st.session_state.save_path + st.session_state.img_filename)
 
                         st.session_state.libraries.append(st.session_state.library)
                         st.session_state.levels.append(st.session_state.level)
                         st.session_state.images.append(st.session_state.img)
-                        st.session_state.save_files.append(save_file)
+                        st.session_state.filenames.append(save_file)
+                        st.session_state.sub_headers.append(day_kor+' '+st.session_state.time_nm[times])
 
             if 'images' in st.session_state and 'libraries' in st.session_state and 'levels' in st.session_state:
-                for f_name, level, library, img in zip(st.session_state.save_files, st.session_state.levels,
-                                                  st.session_state.libraries, st.session_state.images):
-                    show_button(st.session_state.save_path, st.session_state.levels, st.session_state.img,
-                                st.session_state.library, st.session_state.category, st.session_state.img_filename)
+                for f_name, level, library, img, sub_header in zip(st.session_state.filenames, st.session_state.levels,
+                                                  st.session_state.libraries, st.session_state.images,st.session_state.sub_headers):
+                    st.header(sub_header)
+                    show_button(st.session_state.save_path, level, img, library, f_name, 'grid_'+f_name+'.png')
 
 
     elif c_idx == 2:
         st.session_state.category = '도로'
+        st.session_state.category_eng = 'road'
 
         st.write('도로 데이터')
 
@@ -302,8 +365,9 @@ if __name__ == "__main__":
                 del df['WKT']
                 df = gpd.GeoDataFrame(df, crs='epsg:5179')
 
-            st.session_state.dataset = df
-            placeholder.success('도로 데이터 읽기 완료')
+                st.session_state.dataset = df
+                placeholder.success('도로 데이터 읽기 완료')
+                del df
 
         if 'dataset' in st.session_state:
             root_path = str(Path(__file__).parent)+'/dataset/'
@@ -322,19 +386,27 @@ if __name__ == "__main__":
                 st.session_state.df = classify_traffic(st.session_state.df)
                 st.session_state.df = run_traffic(st.session_state.df)
 
-                st.session_state.save_path = str(Path(__file__).parent)+'/results/'
-                st.session_state.library, st.session_state.levels, st.session_state.img_filename = save_and_processing(
-                    st.session_state.save_path, st.session_state.grid, st.session_state.df, st.session_state.category,
-                    st.session_state.category)
+                st.session_state.save_path = server_dir
+                if not os.path.isdir(st.session_state.save_path):
+                    save_warns = st.empty()
+                    save_warns.warning('저장 경로가 존재하지 않습니다. 관리자에게 문의하세요.')
+
+                st.session_state.library, st.session_state.levels = save_and_processing(st.session_state.save_path,
+                                                                                        st.session_state.grid,
+                                                                                        st.session_state.df,
+                                                                                        st.session_state.category,
+                                                                                        st.session_state.category_eng)
+                st.session_state.img_filename = 'grid_' + st.session_state.category_eng + '.png'
                 st.session_state.img = Image.open(st.session_state.save_path + st.session_state.img_filename)
 
-        if 'img' in st.session_state and 'library' in st.session_state and 'levels' in st.session_state:
-                show_button(st.session_state.save_path, st.session_state.levels, st.session_state.img,
-                            st.session_state.library, st.session_state.category, st.session_state.img_filename)
-
+            if 'img' in st.session_state and 'library' in st.session_state and 'levels' in st.session_state:
+                st.header(st.session_state.category)
+                show_button(st.session_state.save_path, st.session_state.levels,st.session_state.img,
+                            st.session_state.library, st.session_state.category_eng, st.session_state.img_filename)
 
     elif c_idx == 3:
         st.session_state.category = '농업'
+        st.session_state.category_eng = 'farm'
 
         st.write('농업 데이터')
         tmp = st.file_uploader('Please choose a file.', accept_multiple_files=True, type='csv', key='0')
@@ -369,21 +441,30 @@ if __name__ == "__main__":
                 st.session_state.arch_overlay = gpd.overlay(st.session_state.grid, st.session_state.arch, how = 'intersection')
 
                 st.session_state.df = make_arch(st.session_state.arch_overlay, st.session_state.grid_ndra)
-                st.session_state.save_path = str(Path(__file__).parent)+'/results/'
-                st.session_state.library, st.session_state.levels, st.session_state.img_filename = save_and_processing(
-                    st.session_state.save_path, st.session_state.grid, st.session_state.df, st.session_state.category,
-                    st.session_state.category)
+                st.session_state.save_path = server_dir
+                if not os.path.isdir(st.session_state.save_path):
+                    save_warns = st.empty()
+                    save_warns.warning('저장 경로가 존재하지 않습니다. 관리자에게 문의하세요.')
+
+                st.session_state.library, st.session_state.levels = save_and_processing(st.session_state.save_path,
+                                                                                        st.session_state.grid,
+                                                                                        st.session_state.df,
+                                                                                        st.session_state.category,
+                                                                                        st.session_state.category_eng)
+                st.session_state.img_filename = 'grid_' + st.session_state.category_eng + '.png'
                 st.session_state.img = Image.open(st.session_state.save_path + st.session_state.img_filename)
 
             if 'img' in st.session_state and 'library' in st.session_state and 'levels' in st.session_state:
+                st.header(st.session_state.category)
                 show_button(st.session_state.save_path, st.session_state.levels, st.session_state.img,
-                            st.session_state.library, st.session_state.category, st.session_state.img_filename)
+                            st.session_state.library, st.session_state.category_eng, st.session_state.img_filename)
 
     elif c_idx == 4:
         st.session_state.category = '시설'
         st.markdown('시설은 **공용, 공업, 교육연구, 의료복지, 편의** 총 **5개의 카테고리**로 이뤄져있습니다.', unsafe_allow_html=False)
         st.write('공통적으로 전국격자지도가 필요하여 데이터를 먼저 읽습니다.')
         st.session_state.c_list = ['공업','공용','교육연구','의료복지','편의']
+        st.session_state.c_eng_list = ['indust','public','edu','medi','convin']
         st.session_state.c_list.sort()
         if 'grid' not in st.session_state:
             root_path = str(Path(__file__).parent)+'/dataset/'
@@ -426,18 +507,36 @@ if __name__ == "__main__":
 
             sub_category = st.selectbox('', st.session_state.c_list)
             sub_cidx = st.session_state.c_list.index(sub_category)
+            sub_ceng = st.session_state.c_eng_list.index(sub_category)
 
-            st.session_state.save_path = str(Path(__file__).parent)+'/results/'
+            st.session_state.save_path = server_dir
             st.session_state.sub_cidx = sub_category
-            st.session_state.library, st.session_state.level, st.session_state.img = run_facil(st.session_state.sub_cidx, st.session_state.buld,
+            st.session_state.sub_c_eng - sub_ceng
+            st.session_state.df = run_facil(st.session_state.sub_cidx, st.session_state.buld,
                                             st.session_state.list_name, st.session_state.grid)
 
-            if 'img' in st.session_state and 'library' in st.session_state and 'level' in st.session_state:
-                show_button(st.session_state.save_path, st.session_state.levels, st.session_state.img,
-                            st.session_state.library, st.session_state.category, st.session_state.img_filename)
+            st.session_state.save_path = server_dir
+            if not os.path.isdir(st.session_state.save_path):
+                save_warns = st.empty()
+                save_warns.warning('저장 경로가 존재하지 않습니다. 관리자에게 문의하세요.')
+
+            st.session_state.library, st.session_state.levels = save_and_processing(st.session_state.save_path,
+                                                                                    st.session_state.grid,
+                                                                                    st.session_state.df,
+                                                                                    st.session_state.category,
+                                                                                    st.session_state.category_eng)
+            st.session_state.img_filename = 'grid_' + st.session_state.category_eng + '.png'
+            st.session_state.img = Image.open(st.session_state.save_path + st.session_state.img_filename)
+
+        if 'img' in st.session_state and 'library' in st.session_state and 'levels' in st.session_state:
+            st.header(st.session_state.category)
+            show_button(st.session_state.save_path, st.session_state.levels, st.session_state.img,
+                        st.session_state.library, st.session_state.category_eng, st.session_state.img_filename)
+
 
     elif c_idx == 5:
         st.session_state.category = '축산업'
+        st.session_state.category_eng = 'listock'
         list_dict = {'11000':'서울특별시', '36000':'세종특별자치시', '30000':'대전광역시',
                      '29000':'광주광역시', '26000':'부산광역시', '27000':'대구광역시',
                      '31000': '울산광역시', '28000':'인천광역시', '50000':'제주특별자치도',
@@ -501,10 +600,10 @@ if __name__ == "__main__":
                     dataset.append(df)
                     emd_c = df['EMD_CD'][0]
 
-                for country in list(list_dict.keys()):
-                    if country[:2] == str(emd_c)[:2]:
-                        list_name.append(list_dict[country])
-                        break
+                    for country in list(list_dict.keys()):
+                        if country[:2] == str(emd_c)[:2]:
+                            list_name.append(list_dict[country])
+                            break
 
             st.session_state.list_name = list_name
             st.session_state.emd = dataset
@@ -523,16 +622,23 @@ if __name__ == "__main__":
                 st.session_state.farm, st.session_state.emd = make_buld_emd(st.session_state.buld, st.session_state.emd, st.session_state.grid, st.session_state.list_name)
                 st.session_state.df = run_livestock(st.session_state.livestock, st.session_state.emd, st.session_state.farm)
 
-                st.session_state.save_path = str(Path(__file__).parent)+'/results/'
-                st.session_state.library, st.session_state.levels, st.session_state.img_filename = save_and_processing(
-                    st.session_state.save_path, st.session_state.grid, st.session_state.df, st.session_state.category,
-                    st.session_state.category)
+                st.session_state.save_path = server_dir
+                if not os.path.isdir(st.session_state.save_path):
+                    save_warns = st.empty()
+                    save_warns.warning('저장 경로가 존재하지 않습니다. 관리자에게 문의하세요.')
+
+                st.session_state.library, st.session_state.levels = save_and_processing(st.session_state.save_path,
+                                                                                        st.session_state.grid,
+                                                                                        st.session_state.df,
+                                                                                        st.session_state.category,
+                                                                                        st.session_state.category_eng)
+                st.session_state.img_filename = 'grid_' + st.session_state.category_eng + '.png'
                 st.session_state.img = Image.open(st.session_state.save_path + st.session_state.img_filename)
 
-
-        if 'img' in st.session_state and 'library' in st.session_state and 'levels' in st.session_state:
+            if 'img' in st.session_state and 'library' in st.session_state and 'levels' in st.session_state:
+                st.header(st.session_state.category)
                 show_button(st.session_state.save_path, st.session_state.levels, st.session_state.img,
-                            st.session_state.library, st.session_state.category, st.session_state.img_filename)
+                            st.session_state.library, st.session_state.category_eng, st.session_state.img_filename)
 
 
 

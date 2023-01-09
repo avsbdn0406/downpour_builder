@@ -53,35 +53,53 @@ def make_life(txt_list):
     return df
 
 
-def run_life(df, category) :
+def run_life(df, category):
     placeholder = st.empty()
     placeholder.success(category+' 데이터를 처리합니다.')
+    if 'gid' in df.keys().to_list() and 'val' in df.keys().to_list():
+        df = df[['gid', 'val']].groupby('gid')['val'].sum().reset_index()
+        df.columns = ['gid', category]
+        return df
+    elif 'gid' in df.keys().to_list() and 'val' not in df.keys().to_list():
+        warns = st.empty()
+        warns.warning(category + '데이터의 "val" 값이 존재하지 않습니다. 프로그램이 종료됩니다. 새로고침을 눌러주세요.')
+        st.stop()
 
-    df = df[['gid', 'val']].groupby('gid')['val'].sum().reset_index()
-    df.columns = ['gid', category]
-    return df
+    elif 'gid' not in df.keys().to_list() and 'val' in df.keys().to_list():
+        warns = st.empty()
+        warns.warning(category + '데이터의 "gid" 값이 존재하지 않습니다. 프로그램이 종료됩니다. 새로고침을 눌러주세요.')
+        st.stop()
+
+    else:
+        warns = st.empty()
+        warns.warning(category + '데이터의 구성 형식이 올바르지 않습니다. 프로그램이 종료됩니다. 새로고침을 눌러주세요.')
+        st.stop()
 
 
 def main_life(data_tot, data_child, data_elder):
     df_total = run_life(data_tot, '총인구')
     df_child = run_life(data_child, '유아')
     df_elder = run_life(data_elder, '고령')
+    if len(df_child) !=0 and len(df_total) !=0 and len(df_elder)!=0:
+        df = pd.concat([df_total[['gid', '총인구']],
+                                         df_child[['유아']],
+                                         df_elder[['고령']]], axis=1)
 
-    df = pd.concat([df_total[['gid', '총인구']],
-                                     df_child[['유아']],
-                                     df_elder[['고령']]], axis=1)
+        df['취약인구'] = df['유아'] + df['고령']
+        df['취약인구비'] = df['취약인구'] / df['총인구']
+        df['전국_인구'] = df['총인구'] * (df['취약인구비'] + 1)
 
-    df['취약인구'] = df['유아'] + df['고령']
-    df['취약인구비'] = df['취약인구'] / df['총인구']
-    df['전국_인구'] = df['총인구'] * (df['취약인구비'] + 1)
+        df = df[df['전국_인구'].notnull()]
+        df = df[['gid', '총인구', '취약인구', '전국_인구']]
 
-    df = df[df['전국_인구'].notnull()]
-    df = df[['gid', '총인구', '취약인구', '전국_인구']]
+        return df
+    else:
+        warns = st.empty()
+        warns.warning('데이터의 형태가 올바르지 않거나 빈 데이터가 입력되었습니다. 프로그램이 종료됩니다.')
+        st.stop()
 
-    return df
 
-
-def save_and_processing(save_path, grid, df, columns, filename):
+def save_and_processing(save_path, grid, df, columns, eng_name):
 
     placeholder = st.empty()
     placeholder.warning('Impact library를 계산합니다.')
@@ -89,50 +107,58 @@ def save_and_processing(save_path, grid, df, columns, filename):
     if not os.path.isdir(save_path):
         os.makedirs(save_path)
 
-    fd = dt.datetime.now()
-    filedate = str(fd.year) + str(fd.month) + str(fd.day) + str(fd.hour) + str(fd.minute) + str(fd.second)
-    library = natural_breaks(df, columns, save_path, filedate+'_'+filename)
+    """
+    6 Jan, Delete
+    # fd = dt.datetime.now()
+    # filedate = str(fd.year) + str(fd.month) + str(fd.day) + str(fd.hour) + str(fd.minute) + str(fd.second)
+    """
+
+    """
+    6 Jan, New
+    """
+    lib_filename = 'icuh_library_'+eng_name+'.csv'
+    library = natural_breaks(df, columns, save_path, lib_filename)
 
     placeholder.empty()
     placeholder.warning('Impact level을 계산합니다.')
 
-    levels = levels_to_csv(library, columns, save_path, filedate+'_'+filename)
+    level_filename = 'icuh_level_' + eng_name+'.csv'
+    levels = levels_to_csv(library, columns, save_path, level_filename)
     placeholder.empty()
-    placeholder.warning(filename + ' 결과 이미지를 저장중 입니다.')
+    placeholder.warning(columns +'('+level_filename+') 결과 이미지를 저장중 입니다.')
 
-    draw_grid(grid, df, save_path, columns, filedate+'_'+filename, mode=1)
-    img_filename = 'grid_'+filedate+'_'+filename+'.png'
-    placeholder.warning(filename + ' 결과 이미지 저장 완료.')
+    draw_grid(grid, df, save_path, columns, eng_name, mode=1)
+    # img_filename = 'grid_'+eng_name+'.png'
+    placeholder.warning(columns + ' 결과 이미지 저장 완료.')
 
-    return library, levels, img_filename
+    return library, levels
 
 
-def show_button(save_path, levels, img, library, file_name, img_filename):
-    st.header(file_name)
-
+def show_button(save_path, levels, img, library, eng_name, img_filename):
     st.subheader('Impact Levels')
     if type(levels['from'][0]) == 'float':
         st.write(levels.style.format("{:.6}"))
     else:
         st.write(levels)
-
     st.image(img)
+
+
     levels = convert_df(levels)
     st.download_button(
         label="Impact levels 산정 기준 저장하기",
         data=levels,
-        file_name=file_name + '_levels.csv',
+        file_name= 'icuh_level_'+eng_name + '.csv',
         mime='text/csv',
-        key = file_name+'_0'
+        key = eng_name+'_0'
     )
 
     libr = convert_df(library)
     st.download_button(
         label="Impact library 저장하기",
         data=libr,
-        file_name= file_name + '.csv',
+        file_name= 'icuh_library_'+eng_name + '.csv',
         mime='text/csv',
-        key=file_name + '_1'
+        key=eng_name + '_1'
     )
 
     with open(save_path + img_filename,
@@ -140,9 +166,9 @@ def show_button(save_path, levels, img, library, file_name, img_filename):
         st.download_button(
             label="이미지 저장하기",
             data=img_save,
-            file_name="grid_" + file_name + ".png",
+            file_name=img_filename,
             mime="image/png",
-            key=file_name + '_2'
+            key=eng_name + '_2'
         )
 
 
@@ -162,36 +188,53 @@ def make_people(file):
 
 
 def make_tot_sido(df_tot, df_child, df_elder):
-    tot_child = pd.merge(df_tot, df_child, on='gid')
-    sido_df = pd.merge(tot_child, df_elder, on='gid')
+    try:
+        df_tot = run_life(df_tot, '총인구')
+        df_child = run_life(df_child, '유아')
+        df_elder = run_life(df_elder, '고령')
+        tot_child = pd.merge(df_tot,df_child, on='gid')
+        sido_df = pd.merge(tot_child,df_elder,on='gid')
+        del tot_child
 
-    sido_df['취약인구'] = sido_df['유아'] + sido_df['고령']
-    sido_df['취약인구비'] = sido_df['취약인구'] / sido_df['총인구']
-    sido_df['생활인구'] = sido_df['총인구'] * (sido_df['취약인구비'] + 1)
+        sido_df['취약인구'] = sido_df['유아'] + sido_df['고령']
+        sido_df['취약인구비'] = sido_df['취약인구'] / sido_df['총인구']
+        sido_df['생활인구'] = sido_df['총인구'] * (sido_df['취약인구비'] + 1)
 
-    sido_df = sido_df[sido_df['생활인구'].notnull()]
-    sido_df = sido_df[['gid', '총인구', '취약인구', '생활인구']]
+        sido_df = sido_df[sido_df['생활인구'].notnull()]
+        sido_df = sido_df[['gid', '총인구', '취약인구', '생활인구']]
 
-    return sido_df
+        return sido_df
+
+    except RuntimeError as e:
+        warns = st.empty()
+        warns.warning('데이터 내에 gid 행이 존재하지 않습니다. 새로고침 후 올바른 데이터를 입력해주세요. 프로그램이 종료됩니다.')
+        st.stop()
+
 
 
 def make_df_people(df):
-    df = df.sort_values(by=['기준일ID', '시간대구분'])
-    df['기준일ID'] = pd.to_datetime(df['기준일ID'].astype(str))
-    df['day_of_week'] = df['기준일ID'].dt.dayofweek
+    try:
+        df = df.sort_values(by=['기준일ID', '시간대구분'])
+        df['기준일ID'] = pd.to_datetime(df['기준일ID'].astype(str))
+        df['day_of_week'] = df['기준일ID'].dt.dayofweek
 
-    df.loc[(df['시간대구분'] >= 6) & (df['시간대구분'] < 9), '시제'] = 1
-    df.loc[(df['시간대구분'] >= 9) & (df['시간대구분'] < 18), '시제'] = 2
-    df.loc[(df['시간대구분'] >= 18) & (df['시간대구분'] < 21), '시제'] = 3
-    df.loc[(df['시간대구분'] < 6) | (df['시간대구분'] >= 21), '시제'] = 4
+        df.loc[(df['시간대구분'] >= 6) & (df['시간대구분'] < 9), '시제'] = 1
+        df.loc[(df['시간대구분'] >= 9) & (df['시간대구분'] < 18), '시제'] = 2
+        df.loc[(df['시간대구분'] >= 18) & (df['시간대구분'] < 21), '시제'] = 3
+        df.loc[(df['시간대구분'] < 6) | (df['시간대구분'] >= 21), '시제'] = 4
 
-    df.loc[(df['day_of_week'] >= 0) | (df['day_of_week'] < 5), '일별'] = 5
-    df.loc[(df['day_of_week'] == 5) | (df['day_of_week'] == 6), '일별'] = 6
+        df.loc[(df['day_of_week'] >= 0) | (df['day_of_week'] < 5), '일별'] = 5
+        df.loc[(df['day_of_week'] == 5) | (df['day_of_week'] == 6), '일별'] = 6
 
-    df_weekdays = df[df['일별'] == 5]
-    df_weekend = df[df['일별'] == 6]
+        df_weekdays = df[df['일별'] == 5]
+        df_weekend = df[df['일별'] == 6]
+        return df_weekdays, df_weekend
 
-    return df_weekdays, df_weekend
+    except RuntimeError as e:
+        warns = st.empty()
+        warns.warning('데이터에 기준일ID 혹은 시간대구분 행이 존재하지 않습니다. 새로고침 후 올바른 데이터를 입력해주세요. 프로그램이 종료됩니다.')
+        warns.stop()
+
 
 
 def day_df(times, df, base_grid):
@@ -223,7 +266,7 @@ def run_people(df, base_grid, seoul_grid, sido_df):
         df = df_list[day]
         for times in range(1,len(time_nm)+1):
             ph.success(day + ' '+ time_nm[times])
-            df_edit = day_df(times, df, base_grid, seoul_grid)
+            df_edit = day_df(times, df, base_grid)
 
             # Seoul
             seoul = pd.merge(seoul_grid, df_edit, on='gid')
@@ -240,12 +283,16 @@ def run_people(df, base_grid, seoul_grid, sido_df):
 
 
 def make_traffic(road_overlay):
-    df = road_overlay[['gid', 'FACIL_KIND', 'length_union', 'LANES']].copy()
-    df['FACIL_KIND'] = df['FACIL_KIND'].astype(int)
-    df['length_union'] = df['length_union'].astype(float)
-    df['LANES'] = df['LANES'].astype(int)
-
-    return df
+    try:
+        df = road_overlay[['gid', 'FACIL_KIND', 'length_union', 'LANES']].copy()
+        df['FACIL_KIND'] = df['FACIL_KIND'].astype(int)
+        df['length_union'] = df['length_union'].astype(float)
+        df['LANES'] = df['LANES'].astype(int)
+        return df
+    except RuntimeError as e:
+        warns = st.empty()
+        warns.warning('데이터 구성이 올바르지 않습니다. 새로고침 후 올바른 데이터를 입력해주세요. 프로그램이 종료됩니다.')
+        st.stop()
 
 
 def classify_traffic(df):
@@ -550,15 +597,6 @@ def run_facil(c_idx, buld, list_name, grid):
         df_3[c_idx] = df_3.sum(axis=1)
     sub_ph.success('계산 완료')
 
-    save_path = './results/'
-    library, level = save_and_processing(save_path,
-                                        grid,
-                                        df_3,
-                                        c_idx, c_idx)
-
-    img = Image.open(
-        save_path + 'grid_' + c_idx + '.png')
-
-    return library, level, img
+    return df3
 
 
