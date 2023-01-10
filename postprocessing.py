@@ -28,6 +28,7 @@ def grid_ndra(grid_file, ndra_file, km_param=1000000):
 
 def natural_breaks(df, columns, folder, filename):
     classifier = mc.NaturalBreaks.make(k=4)
+    print(folder+'/'+filename+'.csv')
     df.to_csv(f'{folder}/{filename}.csv', encoding='cp949', index=False)
 
     df['LEVEL'] = df[[columns]].apply(classifier)
@@ -48,7 +49,7 @@ def levels_to_csv(df, columns, folder, filename):
     else:
         levels = levels.astype('int')
 
-    levels.to_csv(f'{folder}/{filename}_levels.csv', encoding='CP949', index=False)
+    levels.to_csv(f'{folder}/{filename}.csv', encoding='CP949', index=False)
 
     return levels
 
@@ -83,7 +84,7 @@ def draw_grid(grid, df, folder, category, filename, mode=1):
     patches = [mpatches.Patch(color=colors_rgb[i + 1], label="{l}".format(l=values[i])) for i in range(len(values))]
     plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.,
                fontsize='xx-large')
-    plt.title(category, fontsize=20)
+    # plt.title(category, fontsize=20)
     ax.set_axis_off()
     plt.tight_layout()
 

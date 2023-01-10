@@ -43,11 +43,11 @@ if __name__ == "__main__":
     st.write(' ')
 
     st.subheader('대상체를 선택해주세요.')
-    categories = ['01. 전국인구','02. 생활인구','03. 도로','04. 농업','05. 시설','06. 축산업']
+    categories = ['01. 생활','02. 생활인구','03. 도로','04. 농업','05. 시설','06. 축산업']
     category = st.selectbox('', categories)
 
     c_idx = categories.index(category)
-    server_dir = '/tmp/IRIS/'
+    server_dir = './tmp/IRIS/'
 
     st.write(' ')
     st.write(' ')
@@ -56,7 +56,7 @@ if __name__ == "__main__":
 
     if c_idx == 0:
         dataset = []
-        st.session_state.category = '전국_인구'
+        st.session_state.category = '생활'
         st.session_state.category_eng = 'life'
 
         st.write('총 인구 데이터')
@@ -152,15 +152,16 @@ if __name__ == "__main__":
                 st.session_state.grid = gpd.read_file(grid_path).to_crs(epsg=5179)
                 placeholder = st.empty()
 
-                st.session_state.df = main_life(st.session_state.data_tot, st.session_state.data_child, st.session_state.data_elder)
+                st.session_state.df = main_life(st.session_state.data_tot, st.session_state.data_child, st.session_state.data_elder,st.session_state.category)
                 st.session_state.save_path = server_dir
 
                 if not os.path.isdir(st.session_state.save_path):
                     save_warns = st.empty()
                     save_warns.warning('저장 경로가 존재하지 않습니다. 관리자에게 문의하세요.')
                 st.session_state.library, st.session_state.levels = save_and_processing(st.session_state.save_path,st.session_state.grid, st.session_state.df, st.session_state.category,st.session_state.category_eng)
+                del st.session_state.library['LEVEL']
                 st.session_state.img_filename = 'grid_'+st.session_state.category_eng+'.png'
-                st.session_state.img = Image.open( st.session_state.save_path + st.session_state.img_filename)
+                st.session_state.img = Image.open(st.session_state.save_path + st.session_state.img_filename)
 
             if 'img' in st.session_state and 'library' in st.session_state and 'levels' in st.session_state:
                 st.header(st.session_state.category)
@@ -232,7 +233,6 @@ if __name__ == "__main__":
                 warns = st.empty()
                 warns.warning(tmp.name+' 파일은 dbf 확장자가 아니므로 제외됩니다.')
 
-
         st.write('서울시 유아 데이터')
         tmp = st.file_uploader('Please choose a file.', accept_multiple_files=False, type='dbf', key='2')
         if tmp is not None and 'data_child' not in st.session_state:
@@ -259,7 +259,6 @@ if __name__ == "__main__":
             else:
                 warns = st.empty()
                 warns.warning(tmp.name + ' 파일은 dbf 확장자가 아니므로 제외됩니다.')
-
 
         st.write('서울시 고령 데이터')
         tmp = st.file_uploader('Please choose a file.', accept_multiple_files=False, type='dbf', key='3')
@@ -345,7 +344,6 @@ if __name__ == "__main__":
                                                   st.session_state.libraries, st.session_state.images,st.session_state.sub_headers):
                     st.header(sub_header)
                     show_button(st.session_state.save_path, level, img, library, f_name, 'grid_'+f_name+'.png')
-
 
     elif c_idx == 2:
         st.session_state.category = '도로'
@@ -533,9 +531,8 @@ if __name__ == "__main__":
             show_button(st.session_state.save_path, st.session_state.levels, st.session_state.img,
                         st.session_state.library, st.session_state.category_eng, st.session_state.img_filename)
 
-
     elif c_idx == 5:
-        st.session_state.category = '축산업'
+        st.session_state.category = '축산'
         st.session_state.category_eng = 'listock'
         list_dict = {'11000':'서울특별시', '36000':'세종특별자치시', '30000':'대전광역시',
                      '29000':'광주광역시', '26000':'부산광역시', '27000':'대구광역시',
@@ -544,7 +541,7 @@ if __name__ == "__main__":
                      '43000':'충청북도', '41000':'경기도', '42000':'강원도',
                      '48000':'경상남도', '47000':'경상북도'}
 
-        st.write('축산업 데이터')
+        st.write('축산 데이터')
         uploaded_file = st.file_uploader('Please choose a file.', accept_multiple_files=False, type='xlsx', key='0')
         list_name = []
 

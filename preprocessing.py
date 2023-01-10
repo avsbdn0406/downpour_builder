@@ -76,7 +76,7 @@ def run_life(df, category):
         st.stop()
 
 
-def main_life(data_tot, data_child, data_elder):
+def main_life(data_tot, data_child, data_elder,category):
     df_total = run_life(data_tot, '총인구')
     df_child = run_life(data_child, '유아')
     df_elder = run_life(data_elder, '고령')
@@ -87,10 +87,10 @@ def main_life(data_tot, data_child, data_elder):
 
         df['취약인구'] = df['유아'] + df['고령']
         df['취약인구비'] = df['취약인구'] / df['총인구']
-        df['전국_인구'] = df['총인구'] * (df['취약인구비'] + 1)
+        df[category] = df['총인구'] * (df['취약인구비'] + 1)
 
-        df = df[df['전국_인구'].notnull()]
-        df = df[['gid', '총인구', '취약인구', '전국_인구']]
+        df = df[df[category].notnull()]
+        df = df[['gid', '총인구', '취약인구', category]]
 
         return df
     else:
@@ -116,16 +116,16 @@ def save_and_processing(save_path, grid, df, columns, eng_name):
     """
     6 Jan, New
     """
-    lib_filename = 'icuh_library_'+eng_name+'.csv'
+    lib_filename = 'icuh_library_'+eng_name
     library = natural_breaks(df, columns, save_path, lib_filename)
 
     placeholder.empty()
     placeholder.warning('Impact level을 계산합니다.')
 
-    level_filename = 'icuh_level_' + eng_name+'.csv'
+    level_filename = 'icuh_level_' + eng_name
     levels = levels_to_csv(library, columns, save_path, level_filename)
     placeholder.empty()
-    placeholder.warning(columns +'('+level_filename+') 결과 이미지를 저장중 입니다.')
+    placeholder.warning(columns + ' 결과 이미지를 저장중 입니다.')
 
     draw_grid(grid, df, save_path, columns, eng_name, mode=1)
     # img_filename = 'grid_'+eng_name+'.png'
