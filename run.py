@@ -14,6 +14,7 @@ from preprocessing import make_life, main_life, save_and_processing, show_button
     run_facil, make_people, make_tot_sido, run_people
 
 
+
 def grid_ndra(grid_file, ndra_file, km_param=1000000):
     placeholder = st.empty()
     placeholder.success('전국격자지도 읽는 중...')
@@ -23,15 +24,15 @@ def grid_ndra(grid_file, ndra_file, km_param=1000000):
 
     ndra = ndra[['ALIAS', 'SGG_OID', 'COL_ADM_SE', 'geometry']]
     placeholder.success('전국격자지도 X 자연재해위험지구 ...')
-    grid_ndra = gpd.overlay(ndra, grid, how='union')
-    grid_ndra = grid_ndra.loc[((grid_ndra["SGG_OID"] >= 0) & (grid_ndra["gid"].notnull()))]
-    grid_ndra['area'] = grid_ndra.area
-    grid_ndra = grid_ndra.groupby('gid')['area'].sum().reset_index()
-    grid_ndra['prop'] = grid_ndra['area'] / km_param
-    grid_ndra = grid_ndra[['gid', 'prop']]
+    overlay_ndra = gpd.overlay(ndra, grid, how='union')
+    overlay_ndra = overlay_ndra.loc[((overlay_ndra["SGG_OID"] >= 0) & (overlay_ndra["gid"].notnull()))]
+    overlay_ndra['area'] = overlay_ndra.area
+    overlay_ndra = overlay_ndra.groupby('gid')['area'].sum().reset_index()
+    overlay_ndra['prop'] = overlay_ndra['area'] / km_param
+    overlay_ndra = overlay_ndra[['gid', 'prop']]
     placeholder.success('데이터 읽기 완료')
 
-    return grid, grid_ndra
+    return grid, overlay_ndra
 
 
 if __name__ == "__main__":
@@ -432,7 +433,9 @@ if __name__ == "__main__":
             ndra_path = root_path + '자연재해위험지구.shp'
 
             if 'levels' not in st.session_state:
-                st.session_state.grid, st.session_state.grid_ndra = grid_ndra(grid_path, ndra_path)
+                st.session_state.grid, st.session_state.ndra = grid_ndra(grid_path, ndra_path)
+                st.session_state.ndra['prop'] += 1
+                st.session_state.ndra = st.session_state.ndra.rename(columns={'prop': 'prop_ndra'})
 
                 placeholder = st.empty()
                 placeholder.success('전국격자지도 X 농업 격자 데이터...')
@@ -467,9 +470,13 @@ if __name__ == "__main__":
         if 'grid' not in st.session_state:
             root_path = str(Path(__file__).parent)+'/dataset/'
             grid_path = root_path + 'grid_test.shp'
+            ndra_path = root_path + '자연재해위험지구.shp'
+
             placeholder = st.empty()
-            placeholder.success('전국격자지도 읽는 중 ...')
-            st.session_state.grid = gpd.read_file(grid_path).to_crs(epsg=5179)
+            st.session_state.grid, st.session_state.ndra = grid_ndra(grid_path, ndra_path)
+            st.session_state.ndra['prop'] += 1
+            st.session_state.ndra = st.session_state.ndra.rename(columns={'prop': 'prop_ndra'})
+
             placeholder.success('전국격자지도 read 완료')
 
         st.write('BULD 파일')
@@ -505,13 +512,13 @@ if __name__ == "__main__":
 
             sub_category = st.selectbox('', st.session_state.c_list)
             sub_cidx = st.session_state.c_list.index(sub_category)
-            sub_ceng = st.session_state.c_eng_list.index(sub_category)
+            sub_ceng = st.session_state.c_eng_list[sub_cidx]
 
             st.session_state.save_path = server_dir
             st.session_state.sub_cidx = sub_category
-            st.session_state.sub_c_eng - sub_ceng
+            st.session_state.sub_c_eng = sub_ceng
             st.session_state.df = run_facil(st.session_state.sub_cidx, st.session_state.buld,
-                                            st.session_state.list_name, st.session_state.grid)
+                                            st.session_state.list_name, st.session_state.grid,st.session_state.ndra)
 
             st.session_state.save_path = server_dir
             if not os.path.isdir(st.session_state.save_path):
@@ -609,6 +616,14 @@ if __name__ == "__main__":
         if 'livestock' in st.session_state and 'buld' in st.session_state and 'emd' in st.session_state:
             root_path = str(Path(__file__).parent)+'/dataset/'
             grid_path = root_path + 'grid_test.shp'
+            ndra_path = root_path + '자연재해위험지구.shp'
+
+            placeholder = st.empty()
+            st.session_state.grid, st.session_state.ndra = grid_ndra(grid_path, ndra_path)
+            st.session_state.ndra['prop'] += 1
+            st.session_state.ndra = st.session_state.ndra.rename(columns={'prop': 'prop_ndra'})
+
+            placeholder.success('전국격자지도 read 완료')
 
             if 'levels' not in st.session_state:
                 placeholder = st.empty()
@@ -617,7 +632,7 @@ if __name__ == "__main__":
                 placeholder.success('전국격자지도 read 완료')
 
                 st.session_state.farm, st.session_state.emd = make_buld_emd(st.session_state.buld, st.session_state.emd, st.session_state.grid, st.session_state.list_name)
-                st.session_state.df = run_livestock(st.session_state.livestock, st.session_state.emd, st.session_state.farm)
+                st.session_state.df = run_livestock(st.session_state.livestock, st.session_state.emd, st.session_state.farm,st.session_state.ndra)
 
                 st.session_state.save_path = server_dir
                 if not os.path.isdir(st.session_state.save_path):

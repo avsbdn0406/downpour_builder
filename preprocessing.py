@@ -377,12 +377,18 @@ def make_arch(allData_overlay, grid_ndra):
     allData_overlay['합계'] = allData_overlay.iloc[:, 2:].sum(axis=1)
     allData_overlay['prop'] = allData_overlay['합계'] / 1000000
 
+    grid_ndra['prop'] += 1
+    ndra = grid_ndra.rename(columns={'prop': 'prop_ndra'})
+
     placeholder.success('자연재해위험지구 데이터와 계산중...')
-    concat_data = pd.concat([allData_overlay, grid_ndra], keys='gid').reset_index()
+    concat_data = pd.concat([allData_overlay, ndra], keys='gid').reset_index()
     concat_data = concat_data[concat_data["합계"] >= 0]
+
+    concat_data['prop_ndra'] = concat_data['prop_ndra'].fillna(1)
+    concat_data['prop'] = concat_data['prop'] * concat_data['prop_ndra']
     concat_data = concat_data.drop(columns=['합계'])
     concat_data = concat_data.rename(columns={'prop':'농업'})
-    concat_data = concat_data[['gid', '과수', '논', '밭', '시설','농업']]
+    concat_data = concat_data[['gid', '과수', '논', '밭', '시설', '농업']]
 
     return concat_data
 
@@ -443,7 +449,7 @@ def make_buld_emd(bulds, emds, grid, list_name):
     return farm, emd
 
 
-def run_livestock(livestock, emd, farm):
+def run_livestock(livestock, emd, farm, ndra):
     livestock['NM'] = livestock['시도'] + livestock['읍면동']
 
     emd['NM'] = emd['시도'] + emd['EMD_KOR_NM']
@@ -478,17 +484,26 @@ def run_livestock(livestock, emd, farm):
     merge_frame.groupby('gid')['한우', '젖소', '돼지', '육계', '산란계'].sum().reset_index()
 
     merge_frame = merge_frame.fillna(0)
-    merge_frame['축산업'] = merge_frame['한우'] + merge_frame['젖소'] + merge_frame['돼지'] + merge_frame['육계'] + merge_frame[
+
+    concat_data = pd.merge(merge_frame, ndra, on='gid', how='left').reset_index()
+
+    concat_data['prop_ndra'] = concat_data['prop_ndra'].fillna(1)
+
+    concat_data['한우'] = concat_data['prop_ndra'] * concat_data['한우']
+    concat_data['젖소'] = concat_data['prop_ndra'] * concat_data['젖소']
+    concat_data['돼지'] = concat_data['prop_ndra'] * concat_data['돼지']
+    concat_data['산란계'] = concat_data['prop_ndra'] * concat_data['산란계']
+    concat_data['육계'] = concat_data['prop_ndra'] * concat_data['육계']
+
+    concat_data['축산업'] = concat_data['한우'] + concat_data['젖소'] + concat_data['돼지'] + concat_data['육계'] + concat_data[
         '산란계']
 
-    merge_frame['한우'] = merge_frame['한우'].astype(int)
-    merge_frame['젖소'] = merge_frame['젖소'].astype(int)
-    merge_frame['돼지'] = merge_frame['돼지'].astype(int)
-    merge_frame['육계'] = merge_frame['육계'].astype(int)
-    merge_frame['산란계'] = merge_frame['산란계'].astype(int)
-    merge_frame['축산업'] = merge_frame['축산업'].astype(int)
+    concat_data.groupby('gid')['한우', '젖소', '돼지', '육계', '산란계'].sum().reset_index()
 
-    return merge_frame
+    concat_data = concat_data[['gid', '한우', '젖소', '돼지', '산란계', '육계', '축산업']]
+    concat_data = concat_data[concat_data["축산"] >= 0]
+
+    return concat_data
 
 
 def building_comm(df) :
@@ -536,7 +551,7 @@ def building_indus(df):
     return df
 
 
-def run_facil(c_idx, buld, list_name, grid):
+def run_facil(c_idx, buld, list_name, grid, ndra):
     sub_ph = st.empty()
     allData = []
 
@@ -595,8 +610,18 @@ def run_facil(c_idx, buld, list_name, grid):
                               values='BSI_INT_SN', aggfunc='count').reset_index()
 
         df_3[c_idx] = df_3.sum(axis=1)
+
+    concat_data = pd.merge(df_3, ndra, on='gid', how='left').reset_index()
+    concat_data = concat_data[concat_data[c_idx] >= 0]
+
+    concat_data['prop_ndra'] = concat_data['prop_ndra'].fillna(1)
+    concat_data[c_idx] = concat_data[c_idx] * concat_data['prop_ndra']
+
+
     sub_ph.success('계산 완료')
 
-    return df3
+
+
+    return concat_data
 
 
