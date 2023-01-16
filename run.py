@@ -515,9 +515,10 @@ if __name__ == "__main__":
             sub_ceng = st.session_state.c_eng_list[sub_cidx]
 
             st.session_state.save_path = server_dir
-            st.session_state.sub_cidx = sub_category
+            st.session_state.sub_category = sub_category
+            st.session_state.sub_cidx = sub_cidx
             st.session_state.sub_c_eng = sub_ceng
-            st.session_state.df = run_facil(st.session_state.sub_cidx, st.session_state.buld,
+            st.session_state.df = run_facil(st.session_state.sub_category, st.session_state.buld,
                                             st.session_state.list_name, st.session_state.grid,st.session_state.ndra)
 
             st.session_state.save_path = server_dir
@@ -528,15 +529,14 @@ if __name__ == "__main__":
             st.session_state.library, st.session_state.levels = save_and_processing(st.session_state.save_path,
                                                                                     st.session_state.grid,
                                                                                     st.session_state.df,
-                                                                                    st.session_state.category,
-                                                                                    st.session_state.category_eng)
-            st.session_state.img_filename = 'grid_' + st.session_state.category_eng + '.png'
+                                                                                    st.session_state.sub_category,                                                                                    st.session_state.sub_c_eng)
+            st.session_state.img_filename = 'grid_' + st.session_state.sub_c_eng + '.png'
             st.session_state.img = Image.open(st.session_state.save_path + st.session_state.img_filename)
 
         if 'img' in st.session_state and 'library' in st.session_state and 'levels' in st.session_state:
-            st.header(st.session_state.category)
+            st.header(st.session_state.sub_category)
             show_button(st.session_state.save_path, st.session_state.levels, st.session_state.img,
-                        st.session_state.library, st.session_state.category_eng, st.session_state.img_filename)
+                        st.session_state.library, st.session_state.sub_c_eng, st.session_state.img_filename)
 
     elif c_idx == 5:
         st.session_state.category = '축산'
