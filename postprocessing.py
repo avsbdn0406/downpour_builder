@@ -49,7 +49,7 @@ def levels_to_csv(df, columns, folder, filename):
     else:
         levels = levels.astype('int')
 
-    levels.to_csv(f'{folder}/{filename}.csv', encoding='CP949', index=False)
+    levels.to_csv(f'{folder}/{filename}.csv', encoding='cp949', index=False)
 
     return levels
 

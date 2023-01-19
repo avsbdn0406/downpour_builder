@@ -329,8 +329,9 @@ if __name__ == "__main__":
                         # Define filename
                         save_file = st.session_state.category_eng + '_' + st.session_state.m+'_'+ day + '_' + st.session_state.time_eng[times]
                         st.session_state.library, st.session_state.level = save_and_processing(
-                            st.session_state.save_path, st.session_state.grid, res,
-                            st.session_state.category, save_file)
+                            st.session_state.save_path, st.session_state.seoul_grid, res,
+                            st.session_state.category, save_file,mode=1)
+                        del st.session_state.library['LEVEL']
                         st.session_state.img_filename = 'grid_' + save_file + '.png'
                         st.session_state.img = Image.open(st.session_state.save_path + st.session_state.img_filename)
 
@@ -395,6 +396,7 @@ if __name__ == "__main__":
                                                                                         st.session_state.df,
                                                                                         st.session_state.category,
                                                                                         st.session_state.category_eng)
+                del st.session_state.library['LEVEL']
                 st.session_state.img_filename = 'grid_' + st.session_state.category_eng + '.png'
                 st.session_state.img = Image.open(st.session_state.save_path + st.session_state.img_filename)
 
@@ -421,8 +423,13 @@ if __name__ == "__main__":
                     df = pd.read_csv(uploaded_file, encoding='cp949')
                     df['geometry'] = df['geometry'].apply(wkt.loads)
                     df = gpd.GeoDataFrame(df, crs='epsg:5179')
-                    df = df[['INTPR_NM','geometry']]
-                    dataset.append(df)
+                    try:
+                        df = df[['INTPR_NM','geometry']]
+                        dataset.append(df)
+                    except KeyError as e:
+                        warns = st.empty()
+                        warns.warning('입력 데이터셋이 올바르지 않습니다. 프로그램이 종료됩니다. 새로고침 후 다시 시도해주세요.')
+                        st.stop()
             df = pd.concat(dataset, axis=0, ignore_index=True)
             st.session_state.arch = df
             placeholder.success('농업 데이터 읽기 완료')
@@ -441,7 +448,7 @@ if __name__ == "__main__":
                 placeholder.success('전국격자지도 X 농업 격자 데이터...')
                 st.session_state.arch_overlay = gpd.overlay(st.session_state.grid, st.session_state.arch, how = 'intersection')
 
-                st.session_state.df = make_arch(st.session_state.arch_overlay, st.session_state.grid_ndra)
+                st.session_state.df = make_arch(st.session_state.arch_overlay, st.session_state.ndra)
                 st.session_state.save_path = server_dir
                 if not os.path.isdir(st.session_state.save_path):
                     save_warns = st.empty()
@@ -452,6 +459,7 @@ if __name__ == "__main__":
                                                                                         st.session_state.df,
                                                                                         st.session_state.category,
                                                                                         st.session_state.category_eng)
+                del st.session_state.library['LEVEL']
                 st.session_state.img_filename = 'grid_' + st.session_state.category_eng + '.png'
                 st.session_state.img = Image.open(st.session_state.save_path + st.session_state.img_filename)
 
@@ -494,26 +502,32 @@ if __name__ == "__main__":
                 bar_buld.progress(int(100/len(tmp) * (idx+1)))
                 if uploaded_file.name.split('.')[-1]=='csv':
                     df = pd.read_csv(uploaded_file, encoding='cp949')
-                    df['BDTYP_CD'] = df['BDTYP_CD'].astype('str')
-                    for i, b in enumerate(df['BDTYP_CD']):
-                        if len(b)<5:
-                            df['BDTYP_CD'].loc[i] = '0'+b
+                    try:
+                        df['BDTYP_CD'] = df['BDTYP_CD'].astype('str')
+                        for i, b in enumerate(df['BDTYP_CD']):
+                            if len(b)<5:
+                                df['BDTYP_CD'].loc[i] = '0'+b
 
-                    df['geometry'] = df['geometry'].apply(wkt.loads)
-                    df = gpd.GeoDataFrame(df, crs='epsg:5179')
-                    dataset.append(df)
-                    st.session_state.list_name.append(uploaded_file.name)
+                        df['geometry'] = df['geometry'].apply(wkt.loads)
+                        df = gpd.GeoDataFrame(df, crs='epsg:5179')
+                        dataset.append(df)
+                        st.session_state.list_name.append(uploaded_file.name)
+                    except:
+                        warns = st.empty()
+                        warns.warning('입력 데이터셋이 올바르지 않습니다. 프로그램이 종료됩니다. 새로고침 후 다시 시도해주세요.')
+                        st.stop()
+
 
             st.session_state.buld = dataset
             placeholder.success('BULD 데이터 읽기 완료')
 
-        if 'buld' in st.session_state:
-            st.subheader('시설의 세부 카테고리를 선택해주세요.')
+        st.subheader('시설의 세부 카테고리를 선택해주세요.')
 
-            sub_category = st.selectbox('', st.session_state.c_list)
-            sub_cidx = st.session_state.c_list.index(sub_category)
-            sub_ceng = st.session_state.c_eng_list[sub_cidx]
+        sub_category = st.selectbox('', st.session_state.c_list)
+        sub_cidx = st.session_state.c_list.index(sub_category)
+        sub_ceng = st.session_state.c_eng_list[sub_cidx]
 
+        if 'buld' in st.session_state and 'sub_cidx' not in st.session_state:
             st.session_state.save_path = server_dir
             st.session_state.sub_category = sub_category
             st.session_state.sub_cidx = sub_cidx
@@ -527,9 +541,32 @@ if __name__ == "__main__":
                 save_warns.warning('저장 경로가 존재하지 않습니다. 관리자에게 문의하세요.')
 
             st.session_state.library, st.session_state.levels = save_and_processing(st.session_state.save_path,
+                                                                                st.session_state.grid,
+                                                                                st.session_state.df,
+                                                                                st.session_state.sub_category,
+                                                                                st.session_state.sub_c_eng)
+            del st.session_state.library['LEVEL']
+            st.session_state.img_filename = 'grid_' + st.session_state.sub_c_eng + '.png'
+            st.session_state.img = Image.open(st.session_state.save_path + st.session_state.img_filename)
+        elif 'buld' in st.session_state and sub_cidx != st.session_state.sub_cidx:
+            st.session_state.save_path = server_dir
+            st.session_state.sub_category = sub_category
+            st.session_state.sub_cidx = sub_cidx
+            st.session_state.sub_c_eng = sub_ceng
+            st.session_state.df = run_facil(st.session_state.sub_category, st.session_state.buld,
+                                            st.session_state.list_name, st.session_state.grid, st.session_state.ndra)
+
+            st.session_state.save_path = server_dir
+            if not os.path.isdir(st.session_state.save_path):
+                save_warns = st.empty()
+                save_warns.warning('저장 경로가 존재하지 않습니다. 관리자에게 문의하세요.')
+
+            st.session_state.library, st.session_state.levels = save_and_processing(st.session_state.save_path,
                                                                                     st.session_state.grid,
                                                                                     st.session_state.df,
-                                                                                    st.session_state.sub_category,                                                                                    st.session_state.sub_c_eng)
+                                                                                    st.session_state.sub_category,
+                                                                                    st.session_state.sub_c_eng)
+            del st.session_state.library['LEVEL']
             st.session_state.img_filename = 'grid_' + st.session_state.sub_c_eng + '.png'
             st.session_state.img = Image.open(st.session_state.save_path + st.session_state.img_filename)
 
@@ -644,6 +681,7 @@ if __name__ == "__main__":
                                                                                         st.session_state.df,
                                                                                         st.session_state.category,
                                                                                         st.session_state.category_eng)
+                del st.session_state.library['LEVEL']
                 st.session_state.img_filename = 'grid_' + st.session_state.category_eng + '.png'
                 st.session_state.img = Image.open(st.session_state.save_path + st.session_state.img_filename)
 

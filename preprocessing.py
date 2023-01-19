@@ -99,7 +99,7 @@ def main_life(data_tot, data_child, data_elder,category):
         st.stop()
 
 
-def save_and_processing(save_path, grid, df, columns, eng_name):
+def save_and_processing(save_path, grid, df, columns, eng_name,mode=0):
 
     placeholder = st.empty()
     placeholder.warning('Impact library를 계산합니다.')
@@ -121,12 +121,14 @@ def save_and_processing(save_path, grid, df, columns, eng_name):
 
     placeholder.empty()
     placeholder.warning('Impact level을 계산합니다.')
-
     level_filename = 'icuh_level_' + eng_name
     levels = levels_to_csv(library, columns, save_path, level_filename)
-    placeholder.empty()
-    placeholder.warning(columns + ' 결과 이미지를 저장중 입니다.')
 
+    placeholder.empty()
+    if mode==0:
+        placeholder.warning(columns + ' 결과 이미지를 저장중 입니다.')
+    elif mode==1:
+        placeholder.warning(columns + ' 결과 이미지를 저장중 입니다. ('+eng_name+')')
     draw_grid(grid, df, save_path, columns, eng_name, mode=1)
     # img_filename = 'grid_'+eng_name+'.png'
     placeholder.warning(columns + ' 결과 이미지 저장 완료.')
@@ -233,7 +235,7 @@ def make_df_people(df):
     except RuntimeError as e:
         warns = st.empty()
         warns.warning('데이터에 기준일ID 혹은 시간대구분 행이 존재하지 않습니다. 새로고침 후 올바른 데이터를 입력해주세요. 프로그램이 종료됩니다.')
-        warns.stop()
+        st.stop()
 
 
 
@@ -377,7 +379,6 @@ def make_arch(allData_overlay, grid_ndra):
     allData_overlay['합계'] = allData_overlay.iloc[:, 2:].sum(axis=1)
     allData_overlay['prop'] = allData_overlay['합계'] / 1000000
 
-    grid_ndra['prop'] += 1
     ndra = grid_ndra.rename(columns={'prop': 'prop_ndra'})
 
     placeholder.success('자연재해위험지구 데이터와 계산중...')
